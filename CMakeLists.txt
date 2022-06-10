@@ -11,13 +11,13 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(main src/main.cpp)
-target_include_directories(main PUBLIC
+add_executable(mavlink_encoder_decoder src/mavlink_encoder_decoder.cpp)
+target_include_directories(mavlink_encoder_decoder PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(main PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(mavlink_encoder_decoder PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-install(TARGETS main
+install(TARGETS mavlink_encoder_decoder
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
