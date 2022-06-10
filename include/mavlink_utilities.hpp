@@ -1,5 +1,5 @@
 
-namespace uavrt_mavlink_encoder_decoder {
+namespace uavrt_mavlink_utilities {
 
 #define COMMAND_ID_ACK                          1   // Ack response to command
 #define COMMAND_ID_TAG                          2   // Tag info

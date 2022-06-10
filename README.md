@@ -1,8 +1,8 @@
 # UAV-RT MAVLink Utilities package
 
-This ROS 2 Node is responsible for encoding and decoding MAVLink messages that are passed through the companion computer [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) (with a 915 MHz radio) to the ground control station (GCS) PX4 (also connected to a 915 MHz radio). 
+This ROS 2 Node is responsible for encoding and decoding MAVLink messages that are passed through the companion computer [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) (with a 915 MHz radio) to the ground control station (GCS) PX4 (also connected to a 915 MHz radio).
 
-- The messages are stored within MAVLink's [DEBUG_FLOAT_ARRAY #350](https://mavlink.io/en/messages/common.html#DEBUG_FLOAT_ARRAY) 
+- The messages are stored within MAVLink's [DEBUG_FLOAT_ARRAY #350](https://mavlink.io/en/messages/common.html#DEBUG_FLOAT_ARRAY)
 - The GCS is running a custom version of QGroundControl (QGC) developed by [Don Gagne](https://github.com/DonLakeFlyer)
 
 The development of this code was funded via National Science Foundation grant no. 2104570.
@@ -13,9 +13,9 @@ The development of this code was funded via National Science Foundation grant no
   - This connection is established and utilized with [MAVSDK C++](https://mavsdk.mavlink.io/main/en/cpp/)
 - Recieves and publishes telemetry data from the PX4 at a rate of 2Hz
   - This data is published to the /antennaPose topic
-  - This data is written to a dynamic array 
+  - This data is written to a dynamic array
   - Able to write this telemetry data to a .txt file for post-processing
-- Performs [interpolation](https://en.wikipedia.org/wiki/Linear_interpolation) and [slerp](https://en.wikipedia.org/wiki/Slerp#Quaternion_Slerp) for determining the position of the UAV in space given a timestamp 
+- Performs [interpolation](https://en.wikipedia.org/wiki/Linear_interpolation) and [slerp](https://en.wikipedia.org/wiki/Slerp#Quaternion_Slerp) for determining the position of the UAV in space given a timestamp
   - Pulse data is generated/supplied by UAV-RT detectors
     - This data is collected through a subscriber that is subscribed to the /pulse topic
   - Position and quaterion is sourced from the telemetry data collected from the PX4

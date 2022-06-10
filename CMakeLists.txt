@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(uavrt_mavlink_encoder_decoder)
+project(uavrt_mavlink_utilities)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -13,13 +13,13 @@ find_package(ament_cmake REQUIRED)
 
 find_package(MAVSDK REQUIRED)
 
-add_executable(mavlink_encoder_decoder src/mavlink_encoder_decoder.cpp)
-target_include_directories(mavlink_encoder_decoder PUBLIC
+add_executable(main src/main.cpp)
+target_include_directories(main PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_compile_features(mavlink_encoder_decoder PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+target_compile_features(main PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-install(TARGETS mavlink_encoder_decoder
+install(TARGETS main
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
