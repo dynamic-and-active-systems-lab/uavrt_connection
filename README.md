@@ -24,6 +24,30 @@ The development of this code was funded via National Science Foundation grant no
  - Decodes messages MAVLink message sent from QGC and forwards them to UAV-RT/Supervisor
   - Supported messages are outlined in the "Tag Interface Control" document
 
+# Basic operation
+
+TBD
+
+# Documentation
+
+The supporting documentation for this project can be found on the following site:
+
+TBD
+
+# System requirements
+
+The system requirments for the use of this package can be found on the following site:
+
+TBD
+
+# Installaton
+
+TBD
+
+# License
+
+This codebase is released under the GNU Lesser General Public License v3 or later.
+
 # License
 
 This codebase is released under the GNU Lesser General Public License v3 or later.
