@@ -11,6 +11,8 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+find_package(MAVSDK REQUIRED)
+
 add_executable(mavlink_encoder_decoder src/mavlink_encoder_decoder.cpp)
 target_include_directories(mavlink_encoder_decoder PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
