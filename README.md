@@ -6,7 +6,7 @@ The development of this code was funded via National Science Foundation grant no
 
 # Features
 
-- Establishes and monitors a serial or UDP connection with the [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) or [Gazebo SITL](https://ardupilot.org/dev/docs/using-gazebo-simulator-with-sitl.html), respectively
+- Establishes and monitors a serial or UDP connection with a [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) or [Gazebo SITL](https://ardupilot.org/dev/docs/using-gazebo-simulator-with-sitl.html), respectively
   - This connection is established and utilized with [MAVSDK C++](https://mavsdk.mavlink.io/main/en/cpp/)
 - Recieves telemetry data from the PX4 at a rate of 2Hz
   - Publisher this data to the /antennaPose topic  
