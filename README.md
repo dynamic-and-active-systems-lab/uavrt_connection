@@ -1,4 +1,4 @@
-# UAV-RT MAVLink Encoder/Decoder package
+# UAV-RT MAVLink Utilities package
 
 This ROS 2 Node is responsible for encoding and decoding MAVLink messages that are passed through the companion computer [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) (with a 915 MHz radio) to the ground control station (GCS) PX4 (also connected to a 915 MHz radio). 
 
