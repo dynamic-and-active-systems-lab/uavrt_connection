@@ -53,8 +53,8 @@ int main(int argc, char * argv[])
 	// This will also parse command line arguments one day (as of (ROS 2) Beta 1 they are not used).
 	// You must call this before using any other part of the ROS system.
 	// This should be called once per process.
-    // Command line arguments are not necessary for use within the uavrt_connection package.
-    // argc and argv are left here to maintain coherence with the ROS 2 boilerplate code.
+	// Command line arguments are not necessary for use within the uavrt_connection package.
+	// argc and argv are left here to maintain coherence with the ROS 2 boilerplate code.
 	rclcpp::init(argc, argv);
 
 	// Create an executor that will be responsible for execution of callbacks for a set of nodes.
