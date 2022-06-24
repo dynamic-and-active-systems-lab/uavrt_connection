@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>uavrt_mavlink_utilities</name>
+  <name>uavrt_connection</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="mattay2323@gmail.com">dasl</maintainer>
