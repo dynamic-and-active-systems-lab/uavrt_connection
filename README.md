@@ -1,4 +1,4 @@
-# UAV-RT MAVLink Utilities package
+# UAV-RT Connection package
 
 This ROS 2 Node is responsible for establishing and monintoring a UDP or serial onnection with the PX4, as well as encoding and decoding MAVLink messages that are passed through the companion computer [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) (with a 915 MHz radio) to the ground control station (GCS) PX4 (also connected to a 915 MHz radio). The GCS is running a custom version of QGroundControl (QGC) developed by [Don Gagne](https://github.com/DonLakeFlyer).
 
