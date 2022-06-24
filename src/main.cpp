@@ -42,7 +42,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 // Project header files
-#include "uavrt_connection/connection_component.hpp"
+#include "uavrt_connection/connection_handler.hpp"
 
 int main(int argc, char * argv[])
 {

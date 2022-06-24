@@ -37,22 +37,22 @@ find_package(rclcpp REQUIRED)
 
 include_directories(include)
 
-add_library(connection_component SHARED
-  src/connection_component.cpp)
-ament_target_dependencies(connection_component
+add_library(connection_handler SHARED
+  src/connection_handler.cpp)
+ament_target_dependencies(connection_handler
   "rclcpp")
 
 add_executable(main
   src/main.cpp)
 
 target_link_libraries(main
-  connection_component)
+  connection_handler)
 
 ament_target_dependencies(main
   "rclcpp")
 
 install(TARGETS
-  connection_component
+  connection_handler
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
