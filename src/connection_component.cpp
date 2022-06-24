@@ -25,6 +25,9 @@
 // Project header files
 #include "uavrt_connection/connection_component.hpp"
 
+// Forms a std::chrono::duration literal representing seconds.
+// https://en.cppreference.com/w/cpp/chrono/duration
+// https://docs.microsoft.com/en-us/cpp/standard-library/chrono-literals
 using namespace std::chrono_literals;
 
 namespace uavrt_connection
@@ -35,7 +38,10 @@ Connection::Connection(const rclcpp::NodeOptions & options)
 {
 	RCLCPP_INFO(this->get_logger(), "Connection node");
 
-	timer_ = create_wall_timer(2s, std::bind(&Connection::timer_callback, this));
+	telemetry_timer_ = create_wall_timer(telemetry_period_s_,
+	                                     std::bind(
+											 &Connection::timer_callback,
+											 this));
 }
 
 void Connection::timer_callback()

@@ -4,6 +4,17 @@
 #
 # This CMake file was modified based on the CMake file found here:
 # https://github.com/ros2/demos/blob/galactic/composition/CMakeLists.txt
+#
+# Note: Outside of the use of ament_cmake, there does not appear to be a
+# consistent methodology to the commands used with ROS 2 package CMake files.
+#
+# The methodology followed in this CMake file essentially creates a library for
+# each .cpp and then links that .cpp file with the main executable. Since these
+# .cpp files do not contain a main, they are more akin to ROS 2 components.
+# However, ROS 2 component functionality wasn't implemented as it didn't seem
+# necessary at the time. If you would like to know more about components and
+# plugins, I suggest the following blog post as a start:
+# https://ubuntu.com/blog/components-vs-plugins-in-ros-2
 
 cmake_minimum_required(VERSION 3.8)
 project(uavrt_connection)
@@ -39,11 +50,6 @@ target_link_libraries(main
 
 ament_target_dependencies(main
   "rclcpp")
-
-target_include_directories(main PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_features(main PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
 install(TARGETS
   connection_component

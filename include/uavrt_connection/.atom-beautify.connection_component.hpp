@@ -19,9 +19,9 @@ void timer_callback();
 
 private:
 
-std::chrono::seconds telemetry_period_s_ = 0.5s;
 
-rclcpp::TimerBase::SharedPtr telemetry_timer_;
+
+rclcpp::TimerBase::SharedPtr timer_;
 };
 
 }  // namespace uavrt_connection
