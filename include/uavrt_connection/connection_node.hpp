@@ -16,26 +16,30 @@
 
 // The format of the symbol name should be <PROJECT>_<PATH>_<FILE>_H_.
 // https://google.github.io/styleguide/cppguide.html#The__define_Guard
-#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_CONNECTION_HANDLER_H_
-#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_CONNECTION_HANDLER_H_
+#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_CONNECTION_NODE_H_
+#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_CONNECTION_NODE_H_
 
+// Note: Header files from other packages/libraries have to be added to
+// uavrt_connection/package.xml and/or uavrt_connection/CMakeLists.txt
 // ROS 2 header files
 #include "rclcpp/rclcpp.hpp"
+
+// Project header files
+#include "uavrt_connection/link_handler.hpp"
 
 namespace uavrt_connection
 {
 
+// Create the Connection object by inheriting from rclcpp::Node.
 // Note: This class doesn't contain a (virtual) deconstructor since it is not
 // expected to be inherited from.
-class Connection : public rclcpp::Node
+class ConnectionNode : public rclcpp::Node
 {
 public:
-explicit Connection(const rclcpp::NodeOptions &options);
-
-protected:
-void TelemetryCallback();
+explicit ConnectionNode(const rclcpp::NodeOptions &options);
 
 private:
+void TelemetryCallback();
 
 // Class template std::chrono::duration represents a time interval.
 // Utilizes a repetition and a ratio (using std::ratio).
@@ -50,8 +54,10 @@ static constexpr auto telemetry_period_ms_ = std::chrono::milliseconds(500);
 // https://github.com/ros2/rclcpp/blob/galactic/rclcpp/src/rclcpp/clock.cpp
 // https://github.com/ros2/rclcpp/blob/galactic/rclcpp/src/rclcpp/time_source.cpp
 rclcpp::TimerBase::SharedPtr telemetry_timer_;
+
+LinkHandler Link;
 };
 
 }  // namespace uavrt_connection
 
-#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_CONNECTION_HANDLER_H_
+#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_CONNECTION_NODE_H_

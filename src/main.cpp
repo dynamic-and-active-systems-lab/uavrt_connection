@@ -24,7 +24,7 @@
 // The associated documentation for ROS 2 demos can be found here:
 // https://docs.ros.org/en/galactic/Tutorials/Demos.html
 //
-// Note: Additional ROS 2 boilerplate code was sourced from the following ROS 2
+// Additional ROS 2 boilerplate code was sourced from the following ROS 2
 // repository as well:
 // https://github.com/ros2/examples/tree/galactic/rclcpp
 //
@@ -34,17 +34,24 @@
 //
 // The source code found within the aforementioned repositories is licensed under
 // the Apache License, Version 2.0.
+//
+// Note: A majority of the MAVSDK boilerplate code in this subsequent
+// files was sourced from the examples hosted within this MAVSDK repository:
+// https://github.com/mavlink/MAVSDK/tree/main/examples
+//
+// The associated documentation for MAVSDK examples can be found here:
+// https://mavsdk.mavlink.io/main/en/cpp/examples/
+//
+// It is unclear as to whether the example code falls under the BSD 3-Clause
+// license used by the MAVSDK developers.
 
 // C++ standard library headers
 #include <memory>
 
-// ROS 2 header files
-#include "rclcpp/rclcpp.hpp"
-
 // Project header files
-#include "uavrt_connection/connection_handler.hpp"
+#include "uavrt_connection/connection_node.hpp"
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
 	// Force flush of the stdout buffer.
 	setvbuf(stdout, NULL, _IONBF, BUFSIZ);
@@ -64,7 +71,7 @@ int main(int argc, char * argv[])
 
 	// Add some nodes to the executor which provide work for the executor during its "spin" function.
 	// An example of available work is executing a subscription callback, or a timer callback.
-	auto connection = std::make_shared<uavrt_connection::Connection>(options);
+	auto connection = std::make_shared<uavrt_connection::ConnectionNode>(options);
 	exec.add_node(connection);
 
 	// spin will block until work comes in, execute work as it becomes available, and keep blocking.

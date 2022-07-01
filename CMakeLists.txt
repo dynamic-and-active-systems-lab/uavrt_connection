@@ -35,24 +35,35 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
+# In addition to requiring the MAVSDK package and adding it as a dependency,
+# you will need to add specifically link the core/mavsdk library and
+# the necessary plugins.
+# https://github.com/mavlink/MAVSDK/tree/v1.4/src/mavsdk
+find_package(MAVSDK REQUIRED)
+
 include_directories(include)
 
-add_library(connection_handler SHARED
-  src/connection_handler.cpp)
-ament_target_dependencies(connection_handler
-  "rclcpp")
+add_library(connection_node SHARED
+  src/connection_node.cpp)
+ament_target_dependencies(connection_node
+  rclcpp)
+
+add_library(link_handler SHARED
+  src/link_handler.cpp)
+ament_target_dependencies(link_handler
+  MAVSDK)
 
 add_executable(main
   src/main.cpp)
 
 target_link_libraries(main
-  connection_handler)
-
-ament_target_dependencies(main
-  "rclcpp")
+  connection_node
+  link_handler
+  MAVSDK::mavsdk)
 
 install(TARGETS
-  connection_handler
+  connection_node
+  link_handler
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
