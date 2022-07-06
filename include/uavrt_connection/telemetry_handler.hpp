@@ -30,24 +30,9 @@ namespace uavrt_connection
 class TelemetryHandler
 {
 public:
-explicit TelemetryHandler(rclcpp::Node::SharedPtr& node);
+explicit TelemetryHandler();
 
 private:
-void TelemetryCallback();
-
-// Class template std::chrono::duration represents a time interval.
-// Utilizes a repetition and a ratio (using std::ratio).
-// https://en.cppreference.com/w/cpp/chrono/duration
-// Note: The following line is equivalent to the one being used...
-// static constexpr auto period_ms_ = std::literals::chrono_literals::operator""ms(500);
-static constexpr auto telemetry_period_ms_ = std::chrono::milliseconds(500);
-
-// From what I can tell, this is a shared_ptr to a rclcpp::TimerBase object,
-// which contains a shared_ptr to a rclcpp::Clock object.
-// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/include/rclcpp/timer.hpp
-// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/src/rclcpp/clock.cpp
-// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/src/rclcpp/time_source.cpp
-rclcpp::TimerBase::SharedPtr telemetry_timer_;
 
 };
 

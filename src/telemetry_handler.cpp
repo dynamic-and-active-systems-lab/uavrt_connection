@@ -24,16 +24,8 @@
 namespace uavrt_connection
 {
 
-TelemetryHandler::TelemetryHandler(rclcpp::Node::SharedPtr& node)
+TelemetryHandler::TelemetryHandler()
 {
-	telemetry_timer_ = rclcpp::create_wall_timer(telemetry_period_ms_,
-	                                             std::bind(&TelemetryHandler::TelemetryCallback,
-	                                                       node));
-}
 
-void TelemetryHandler::TelemetryCallback()
-{
-	RCLCPP_INFO(rclcpp::get_logger("Connection"),
-	            "Telemetry callback.");
 }
 } // namespace uavrt_connection

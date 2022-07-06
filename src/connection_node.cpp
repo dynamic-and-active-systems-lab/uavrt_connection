@@ -32,7 +32,7 @@ namespace uavrt_connection
 // using parameters.
 // https://docs.ros2.org/galactic/api/rclcpp/classrclcpp_1_1NodeOptions.html
 ConnectionNode::ConnectionNode(const rclcpp::NodeOptions& options)
-	: Node("Connection", options), Link(), Telemetry(node_base)
+	: Node("Connection", options), Link(), Telemetry()
 {
 	// In order to use rclcpp::Logger, you need to supply the get_logger()
 	// function with a rclcpp::Node or you can call it while passing in the
@@ -43,12 +43,15 @@ ConnectionNode::ConnectionNode(const rclcpp::NodeOptions& options)
 	// https://answers.ros.org/question/361542/ros-2-how-to-create-a-non-node-logger/
 	RCLCPP_INFO(rclcpp::get_logger("Connection"), "Connection node successfully created.");
 
-	// node_base = shared_from_this();
+	telemetry_timer_ = create_wall_timer(telemetry_period_ms_,
+	                                     std::bind(&ConnectionNode::TelemetryCallback,
+	                                               this));
 }
 
-void ConnectionNode::initTelem()
+void ConnectionNode::TelemetryCallback()
 {
-	this->node_base = shared_from_this();
+	RCLCPP_INFO(rclcpp::get_logger("Connection"),
+	            "Telemetry callback.");
 }
 
 } // namespace uavrt_connection
