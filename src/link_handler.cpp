@@ -27,15 +27,34 @@ namespace uavrt_connection
 
 LinkHandler::LinkHandler()
 {
-
+	SetSystem();
 }
 
 // In C++, methods and functions have the following syntax:
 // <return-type> <class-name> :: <method-name> ( <arguments> ) { <statements> }
 // Scope resolution operator (::)
-std::shared_ptr<mavsdk::System> LinkHandler::GetSystem(mavsdk::Mavsdk &mavsdk)
+void LinkHandler::SetSystem()
 {
-    static constexpr auto autopilot_timeout_s_ = std::chrono::seconds(3);
+	mavsdk::Mavsdk mavsdk;
+
+	// Connection URL format should be:
+	// For TCP : tcp://[server_host][:server_port]
+	// For UDP : udp://[bind_host][:bind_port]
+	// For Serial : serial:///path/to/serial/dev[:baudrate]
+    // For example, to connect to the Pixhawk use URL: "serial:///dev/ttyACM0"
+	// For example, to connect to the simulator use URL: udp://:14540
+	mavsdk::ConnectionResult connection_result =
+		mavsdk.add_any_connection("serial:///dev/ttyACM0");
+
+	if (connection_result != mavsdk::ConnectionResult::Success)
+	{
+		RCLCPP_ERROR(rclcpp::get_logger("Connection"),
+		             "Serial connection failed.");
+		return;
+	}
+
+	// Make this a member variable? How?
+	static constexpr auto autopilot_timeout_s_ = std::chrono::seconds(1);
 
 	// std::cout << "Waiting to discover system...\n";
 	auto promise = std::promise<std::shared_ptr<mavsdk::System> >{};
@@ -48,7 +67,9 @@ std::shared_ptr<mavsdk::System> LinkHandler::GetSystem(mavsdk::Mavsdk &mavsdk)
 			auto system = mavsdk.systems().back();
 
 			if (system->has_autopilot()) {
-			    //std::cout << "Discovered autopilot\n";
+
+			    RCLCPP_INFO(rclcpp::get_logger("Connection"),
+			                "Discovered autopilot.");
 
 			    // Unsubscribe again as we only want to find one system.
 			    mavsdk.subscribe_on_new_system(nullptr);
@@ -56,17 +77,22 @@ std::shared_ptr<mavsdk::System> LinkHandler::GetSystem(mavsdk::Mavsdk &mavsdk)
 			}
 		});
 
-	// We usually receive heartbeats at 1Hz, therefore we should find a
-	// system after around 3 seconds max, surely.
+	// We usually receive heartbeats at 1Hz
 	if (future.wait_for(autopilot_timeout_s_) ==
 	    std::future_status::timeout)
 	{
-		//std::cerr << "No autopilot found.\n";
-		return {};
+        RCLCPP_ERROR(rclcpp::get_logger("Connection"),
+		             "No autopilot found.");
+		return;
 	}
 
-	// Get discovered system now.
-	return future.get();
+	// Set the discovered system
+	this->system_ = future.get();
+}
+
+std::shared_ptr<mavsdk::System> LinkHandler::GetSystem()
+{
+	return this->system_;
 }
 
 } // namespace uavrt_connection

@@ -14,32 +14,26 @@
 // You should have received a copy of the GNU General Public License along with
 // this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_LINK_HANDLER_H_
-#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_LINK_HANDLER_H_
+// C++ standard library headers
+#include <chrono>
+#include <memory>
 
-// ROS 2 header files
-#include "rclcpp/rclcpp.hpp"
-
-// MAVSDK header files
-#include "mavsdk/mavsdk.h"
-#include "mavsdk/system.h"
+// Project header files
+#include "uavrt_connection/telemetry_handler.hpp"
 
 namespace uavrt_connection
 {
 
-class LinkHandler
+TelemetryHandler::TelemetryHandler(rclcpp::Node::SharedPtr& node)
 {
-public:
-explicit LinkHandler();
+	telemetry_timer_ = rclcpp::create_wall_timer(telemetry_period_ms_,
+	                                             std::bind(&TelemetryHandler::TelemetryCallback,
+	                                                       node));
+}
 
-void SetSystem();
-std::shared_ptr<mavsdk::System> GetSystem();
-
-private:
-std::shared_ptr<mavsdk::System> system_;
-
-};
-
-}  // namespace uavrt_connection
-
-#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_LINK_HANDLER_H_
+void TelemetryHandler::TelemetryCallback()
+{
+	RCLCPP_INFO(rclcpp::get_logger("Connection"),
+	            "Telemetry callback.");
+}
+} // namespace uavrt_connection
