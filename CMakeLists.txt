@@ -28,25 +28,35 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
-# uncomment the following section in order to fill in
+# Find dependencies: uncomment the following section in order to fill in
 # further dependencies manually.
+# Make sure you add the dependencies to the package.xml file as well!
+# Else the program will crash and it won't tell you why.
 # find_package(<dependency> REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
+# ROS 2 interfaces
+find_package(builtin_interfaces REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+
 # In addition to requiring the MAVSDK package and adding it as a dependency,
-# you will need to add specifically link the core/mavsdk library and
-# the necessary plugins.
-# https://github.com/mavlink/MAVSDK/tree/v1.4/src/mavsdk
+# you will need to add specifically link the core/mavsdk library.
+# https://mavsdk.mavlink.io/main/en/cpp/api_changes.html#linking
 find_package(MAVSDK REQUIRED)
+
+# UAV-RT packages
+find_package(uavrt_interfaces REQUIRED)
 
 include_directories(include)
 
 add_library(connection_node SHARED
   src/connection_node.cpp)
 ament_target_dependencies(connection_node
-  rclcpp)
+  rclcpp
+  std_msgs
+  geometry_msgs)
 
 add_library(link_handler SHARED
   src/link_handler.cpp)

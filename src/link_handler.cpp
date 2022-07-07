@@ -30,9 +30,32 @@ LinkHandler::LinkHandler()
 	SetSystem();
 }
 
+// Search for the following terms in the link below for more info on "is_connected":
+// typedef IsConnectedCallback, is_connected(), subscribe_is_connected()
+// https://mavsdk.mavlink.io/main/en/cpp/api_reference/classmavsdk_1_1_system.html
+void LinkHandler::MonitorLink()
+{
+	this->system_->subscribe_is_connected([this](bool is_connected)
+	{
+	    if (is_connected)
+		{
+			RCLCPP_INFO(rclcpp::get_logger("Connection"), "System has been discovered.");
+			this->StatusFLag = true;
+	    }
+		else
+		{
+			RCLCPP_ERROR(rclcpp::get_logger(
+				"Connection"), "System has timed out! Attempting to reconnect.");
+			this->StatusFLag = false;
+	    }
+	});
+}
+
 // In C++, methods and functions have the following syntax:
 // <return-type> <class-name> :: <method-name> ( <arguments> ) { <statements> }
 // Scope resolution operator (::)
+// MAVSDK developer's methodology to discovering new autopilot systems:
+// https://mavsdk.mavlink.io/main/en/cpp/api_changes.html#discovery-of-systems
 void LinkHandler::SetSystem()
 {
 	mavsdk::Mavsdk mavsdk;
@@ -41,15 +64,14 @@ void LinkHandler::SetSystem()
 	// For TCP : tcp://[server_host][:server_port]
 	// For UDP : udp://[bind_host][:bind_port]
 	// For Serial : serial:///path/to/serial/dev[:baudrate]
-    // For example, to connect to the Pixhawk use URL: "serial:///dev/ttyACM0"
+	// For example, to connect to the Pixhawk use URL: "serial:///dev/ttyACM0"
 	// For example, to connect to the simulator use URL: udp://:14540
 	mavsdk::ConnectionResult connection_result =
 		mavsdk.add_any_connection("serial:///dev/ttyACM0");
 
 	if (connection_result != mavsdk::ConnectionResult::Success)
 	{
-		RCLCPP_ERROR(rclcpp::get_logger("Connection"),
-		             "Serial connection failed.");
+		RCLCPP_ERROR(rclcpp::get_logger("Connection"), "Serial connection failed.");
 		return;
 	}
 
@@ -57,42 +79,39 @@ void LinkHandler::SetSystem()
 	static constexpr auto autopilot_timeout_s_ = std::chrono::seconds(1);
 
 	// std::cout << "Waiting to discover system...\n";
-	auto promise = std::promise<std::shared_ptr<mavsdk::System> >{};
-	auto future = promise.get_future();
+	auto system_promise = std::promise<std::shared_ptr<mavsdk::System> >{};
+	auto system_future = system_promise.get_future();
 
 	// We wait for new systems to be discovered, once we find one that has an
 	// autopilot, we decide to use it.
-	mavsdk.subscribe_on_new_system([&mavsdk, &promise]()
+	mavsdk.subscribe_on_new_system([&mavsdk, &system_promise]()
 		{
 			auto system = mavsdk.systems().back();
 
 			if (system->has_autopilot()) {
 
-			    RCLCPP_INFO(rclcpp::get_logger("Connection"),
-			                "Discovered autopilot.");
+			    RCLCPP_INFO(rclcpp::get_logger("Connection"), "Discovered autopilot.");
 
 			    // Unsubscribe again as we only want to find one system.
 			    mavsdk.subscribe_on_new_system(nullptr);
-			    promise.set_value(system);
+			    system_promise.set_value(system);
 			}
 		});
 
 	// We usually receive heartbeats at 1Hz
-	if (future.wait_for(autopilot_timeout_s_) ==
-	    std::future_status::timeout)
+	if (system_future.wait_for(autopilot_timeout_s_) == std::future_status::timeout)
 	{
-        RCLCPP_ERROR(rclcpp::get_logger("Connection"),
-		             "No autopilot found.");
+		RCLCPP_ERROR(rclcpp::get_logger("Connection"), "No autopilot found.");
 		return;
 	}
 
 	// Set the discovered system
-	this->system_ = future.get();
+	this->system_ = system_future.get();
 }
 
-std::shared_ptr<mavsdk::System> LinkHandler::GetSystem()
+void LinkHandler::SetTelemetry()
 {
-	return this->system_;
+	// mavsdk::Telemetry telemetry = mavsdk::Telemetry{this->system_};
 }
 
 } // namespace uavrt_connection

@@ -23,6 +23,7 @@
 // MAVSDK header files
 #include "mavsdk/mavsdk.h"
 #include "mavsdk/system.h"
+#include "mavsdk/plugins/telemetry/telemetry.h"
 
 namespace uavrt_connection
 {
@@ -32,10 +33,14 @@ class LinkHandler
 public:
 explicit LinkHandler();
 
-void SetSystem();
-std::shared_ptr<mavsdk::System> GetSystem();
+bool StatusFLag; 
 
 private:
+void MonitorLink();
+
+void SetTelemetry();
+void SetSystem();
+
 std::shared_ptr<mavsdk::System> system_;
 
 };
