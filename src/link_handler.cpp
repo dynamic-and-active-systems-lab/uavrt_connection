@@ -18,6 +18,7 @@
 #include <chrono>
 #include <memory>
 #include <future>
+#include <thread>
 
 // Project header files
 #include "uavrt_connection/link_handler.hpp"
@@ -27,28 +28,31 @@ namespace uavrt_connection
 
 LinkHandler::LinkHandler()
 {
-	SetSystem();
+	// SetSystem();
 }
 
 // Search for the following terms in the link below for more info on "is_connected":
 // typedef IsConnectedCallback, is_connected(), subscribe_is_connected()
 // https://mavsdk.mavlink.io/main/en/cpp/api_reference/classmavsdk_1_1_system.html
-void LinkHandler::MonitorLink()
+void LinkHandler::MonitorLink(std::shared_ptr<mavsdk::System> system)
 {
-	this->system_->subscribe_is_connected([this](bool is_connected)
-	{
-	    if (is_connected)
+	RCLCPP_INFO(rclcpp::get_logger("Connection"),
+	            "System has been discovered3.");
+	system->subscribe_is_connected([this](bool is_connected)
 		{
-			RCLCPP_INFO(rclcpp::get_logger("Connection"), "System has been discovered.");
-			this->StatusFLag = true;
-	    }
-		else
-		{
-			RCLCPP_ERROR(rclcpp::get_logger(
-				"Connection"), "System has timed out! Attempting to reconnect.");
-			this->StatusFLag = false;
-	    }
-	});
+			if (is_connected)
+			{
+			    RCLCPP_INFO(rclcpp::get_logger("Connection"),
+			                "System has been discovered2.");
+			    this->StatusFLag = true;
+			}
+			else
+			{
+			    RCLCPP_ERROR(rclcpp::get_logger("Connection"),
+			                 "System has timed out! Attempting to reconnect.");
+			    this->StatusFLag = false;
+			}
+		});
 }
 
 // In C++, methods and functions have the following syntax:
@@ -60,6 +64,8 @@ void LinkHandler::SetSystem()
 {
 	mavsdk::Mavsdk mavsdk;
 
+	rclcpp::Rate sleepRate(std::chrono::seconds(1));
+
 	// Connection URL format should be:
 	// For TCP : tcp://[server_host][:server_port]
 	// For UDP : udp://[bind_host][:bind_port]
@@ -69,10 +75,16 @@ void LinkHandler::SetSystem()
 	mavsdk::ConnectionResult connection_result =
 		mavsdk.add_any_connection("serial:///dev/ttyACM0");
 
-	if (connection_result != mavsdk::ConnectionResult::Success)
+	// if (connection_result != mavsdk::ConnectionResult::Success)
+	// {
+	// 	RCLCPP_ERROR(rclcpp::get_logger("Connection"), "Serial connection failed.");
+	// 	return;
+	// }
+
+	while (connection_result != mavsdk::ConnectionResult::Success)
 	{
 		RCLCPP_ERROR(rclcpp::get_logger("Connection"), "Serial connection failed.");
-		return;
+		sleepRate.sleep();
 	}
 
 	// Make this a member variable? How?
@@ -88,8 +100,8 @@ void LinkHandler::SetSystem()
 		{
 			auto system = mavsdk.systems().back();
 
-			if (system->has_autopilot()) {
-
+			if (system->has_autopilot())
+			{
 			    RCLCPP_INFO(rclcpp::get_logger("Connection"), "Discovered autopilot.");
 
 			    // Unsubscribe again as we only want to find one system.
@@ -105,8 +117,30 @@ void LinkHandler::SetSystem()
 		return;
 	}
 
+	auto system = system_future.get();
+
+	system->subscribe_is_connected([](bool is_connected)
+		{
+			if (is_connected)
+			{
+			    RCLCPP_INFO(rclcpp::get_logger("Connection"),
+			                "System has been discovered2.");
+			}
+			else
+			{
+			    RCLCPP_ERROR(rclcpp::get_logger("Connection"),
+			                 "System has timed out! Attempting to reconnect.");
+			}
+		});
+
+	RCLCPP_ERROR(rclcpp::get_logger("Connection"), "No autopilot found.");
+
+	// while (system->is_connected() == true)
+	// {
+	// 	std::this_thread::sleep_for(std::chrono::seconds(1));
+	// }
 	// Set the discovered system
-	this->system_ = system_future.get();
+	// this->system_ = system_future.get();
 }
 
 void LinkHandler::SetTelemetry()

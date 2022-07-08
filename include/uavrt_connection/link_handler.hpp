@@ -33,13 +33,17 @@ class LinkHandler
 public:
 explicit LinkHandler();
 
-bool StatusFLag; 
+bool StatusFLag;
+
+void SetSystem();
+
+void MonitorLink(std::shared_ptr<mavsdk::System> system);
 
 private:
-void MonitorLink();
+
 
 void SetTelemetry();
-void SetSystem();
+
 
 std::shared_ptr<mavsdk::System> system_;
 
