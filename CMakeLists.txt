@@ -42,7 +42,7 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 # In addition to requiring the MAVSDK package and adding it as a dependency,
-# you will need to add specifically link the core/mavsdk library.
+# you will need to add specifically link the core mavsdk library.
 # https://mavsdk.mavlink.io/main/en/cpp/api_changes.html#linking
 find_package(MAVSDK REQUIRED)
 
@@ -51,19 +51,16 @@ find_package(uavrt_interfaces REQUIRED)
 
 include_directories(include)
 
+# libconnection_node.so
 add_library(connection_node SHARED
   src/connection_node.cpp)
 ament_target_dependencies(connection_node
   rclcpp
   std_msgs
-  geometry_msgs)
-
-add_library(link_handler SHARED
-  src/link_handler.cpp)
-ament_target_dependencies(link_handler
-  rclcpp
+  geometry_msgs
   MAVSDK)
 
+# libtelemetry_handler.so
 add_library(telemetry_handler SHARED
   src/telemetry_handler.cpp)
 ament_target_dependencies(telemetry_handler
@@ -75,13 +72,11 @@ add_executable(main
 
 target_link_libraries(main
   connection_node
-  link_handler
   telemetry_handler
   MAVSDK::mavsdk)
 
 install(TARGETS
   connection_node
-  link_handler
   telemetry_handler
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

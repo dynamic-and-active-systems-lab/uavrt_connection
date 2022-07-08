@@ -28,4 +28,12 @@ TelemetryHandler::TelemetryHandler()
 {
 
 }
+
+void TelemetryHandler::RefreshTelemetry(mavsdk::Telemetry mavsdk_telemetry)
+{
+	this->position_latitude_ = mavsdk_telemetry.position().latitude_deg;
+	this->position_longitude_ = mavsdk_telemetry.position().longitude_deg;
+	this->position_altitude_ = mavsdk_telemetry.position().absolute_altitude_m;
+}
+
 } // namespace uavrt_connection
