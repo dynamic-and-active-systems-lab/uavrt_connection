@@ -104,12 +104,14 @@ void ConnectionNode::GetSystem()
 		system_ = serial_mavsdk.systems().at(0);
 		RCLCPP_INFO(rclcpp::get_logger("ConnectionNode"),
 		            "Serial - MAVSDK connection successfully established.");
+		connection_status_ = true;
 	}
 	else if(udp_mavsdk.systems().size() == 1)
 	{
 		system_ = udp_mavsdk.systems().at(0);
 		RCLCPP_INFO(rclcpp::get_logger("ConnectionNode"),
 		            "UDP - MAVSDK connection successfully established.");
+		connection_status_ = true;
 	}
 	else
 	{
@@ -125,8 +127,17 @@ void ConnectionNode::ConnectionCallback(bool is_connected)
 	connection_status_ = is_connected;
 	RCLCPP_ERROR(rclcpp::get_logger("ConnectionNode"),
 	             "System has timed out! Attempting to reconnect.");
-	// serial_mavsdk.systems().clear();
+
 	// std::cout << "serial size: " << serial_mavsdk.systems().size() << std::endl;
+	// serial_mavsdk.systems().pop_back();
+	// //Iterate through detected systems
+	// for (auto system : serial_mavsdk.systems()) {
+	// 	std::cout << "Found system with MAVLink system ID: " << static_cast<int>(system->get_system_id())
+	// 	          << ", connected: " << (system->is_connected() ? "yes" : "no")
+	// 	          << ", has autopilot: " << (system->has_autopilot() ? "yes" : "no") << '\n';
+	// }
+	// std::cout << "serial size: " << serial_mavsdk.systems().size() << std::endl;
+
 	GetSystem();
 }
 
@@ -136,7 +147,7 @@ void ConnectionNode::AntennaPoseCallback()
 	{
 		// Not sure how to make this a member variable to avoid remaking it
 		// each time.
-		mavsdk::Telemetry mavsdk_telemetry = mavsdk::Telemetry(system_);
+		std::shared_ptr<mavsdk::Telemetry> mavsdk_telemetry = std::make_shared<mavsdk::Telemetry>(system_);
 
 		TelemetryHandlerObject.RefreshTelemetry(mavsdk_telemetry);
 
@@ -169,7 +180,7 @@ void ConnectionNode::AntennaPoseCallback()
 		antenna_pose_publisher_->publish(antenna_pose_pose_stamped_);
 
 		RCLCPP_INFO(rclcpp::get_logger("ConnectionNode"),
-					"Successfully published /antenna_pose.");
+		            "Successfully published /antenna_pose.");
 
 		// Still need to create an array for storing pose info.
 	}

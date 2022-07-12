@@ -34,7 +34,7 @@ class TelemetryHandler
 public:
 explicit TelemetryHandler();
 
-void RefreshTelemetry(mavsdk::Telemetry mavsdk_telemetry);
+void RefreshTelemetry(std::shared_ptr<mavsdk::Telemetry> mavsdk_telemetry);
 
 // https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_position.html#structmavsdk_1_1_telemetry_1_1_position_1
 double position_latitude_; // Latitude in degrees (range: -90 to +90)

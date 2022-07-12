@@ -86,7 +86,7 @@ rclcpp::TimerBase::SharedPtr antenna_pose_timer_;
 mavsdk::Mavsdk serial_mavsdk;
 mavsdk::Mavsdk udp_mavsdk;
 std::shared_ptr<mavsdk::System> system_;
-bool connection_status_;
+bool connection_status_; 
 
 // Private member objects
 TelemetryHandler TelemetryHandlerObject;

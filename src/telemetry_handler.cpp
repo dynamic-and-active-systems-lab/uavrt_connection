@@ -29,11 +29,20 @@ TelemetryHandler::TelemetryHandler()
 
 }
 
-void TelemetryHandler::RefreshTelemetry(mavsdk::Telemetry mavsdk_telemetry)
+// I'm not sure how to detect if there was an error getting the position
+// attributes from the Telemetry object. E.g. the Pixhawk is unplugged, then
+// the statements below should report that there was an issue.
+// MAVSDK doesn't use exceptions but instead enum values. But I'm not sure
+// what I'm supposed to be comparing to the enum value for success or failure.
+// There isn't a result associated with the statements below.
+// https://mavsdk.mavlink.io/main/en/cpp/guide/general_usage.html#error-handling
+void TelemetryHandler::RefreshTelemetry(std::shared_ptr<mavsdk::Telemetry> mavsdk_telemetry)
 {
-	this->position_latitude_ = mavsdk_telemetry.position().latitude_deg;
-	this->position_longitude_ = mavsdk_telemetry.position().longitude_deg;
-	this->position_altitude_ = mavsdk_telemetry.position().absolute_altitude_m;
+    // Poll for 'Position' (blocking).
+    // https://mavsdk.mavlink.io/main/en/cpp/api_reference/classmavsdk_1_1_telemetry.html#classmavsdk_1_1_telemetry_1a2299da1bc63313c429f07ab0fdbe5335
+	this->position_latitude_ = mavsdk_telemetry->position().latitude_deg;
+	this->position_longitude_ = mavsdk_telemetry->position().longitude_deg;
+	this->position_altitude_ = mavsdk_telemetry->position().absolute_altitude_m;
 }
 
 } // namespace uavrt_connection
