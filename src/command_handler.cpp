@@ -15,7 +15,7 @@
 // this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // C++ standard library headers
-#include <chrono>
+#include <functional>
 #include <memory>
 
 // Project header files
@@ -42,7 +42,7 @@ bool CommandHandler::CommandCallback(mavlink_message_t& message)
 
 		switch (debugFloatArray.array_id)
 		{
-		case 1:
+		case static_cast<int>(CommandID::CommandIDTag):
 			// _handleTagCommand(debugFloatArray);
 			break;
 		}

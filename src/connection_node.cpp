@@ -61,6 +61,11 @@ ConnectionNode::ConnectionNode(const rclcpp::NodeOptions& options,
 		antenna_pose_period_ms_, std::bind(&ConnectionNode::AntennaPoseCallback,
 		                                   this));
 
+	pulse_subscriber_ = this->create_subscription<uavrt_interfaces::msg::Pulse>(
+		"/pulse", queue_size_, std::bind(&ConnectionNode::PulseCallback,
+		                                 this,
+		                                 std::placeholders::_1));
+
 }
 
 // Search for the following terms in the link below for more info on "is_connected":
@@ -92,10 +97,10 @@ void ConnectionNode::AntennaPoseCallback()
 		antenna_pose_point_.y = TelemetryHandlerObject.GetPositionLongitude();
 		antenna_pose_point_.z = TelemetryHandlerObject.GetPositionAltitude();
 
-		antenna_pose_quaternion_.x = 0;
-		antenna_pose_quaternion_.y = 0;
-		antenna_pose_quaternion_.z = 0;
-		antenna_pose_quaternion_.w = 0;
+		antenna_pose_quaternion_.w = TelemetryHandlerObject.GetQuaternionW();
+		antenna_pose_quaternion_.x = TelemetryHandlerObject.GetQuaternionX();
+		antenna_pose_quaternion_.y = TelemetryHandlerObject.GetQuaternionY();
+		antenna_pose_quaternion_.z = TelemetryHandlerObject.GetQuaternionZ();
 
 		antenna_pose_pose_.position = antenna_pose_point_;
 		antenna_pose_pose_.orientation = antenna_pose_quaternion_;
@@ -110,6 +115,13 @@ void ConnectionNode::AntennaPoseCallback()
 
 		// Still need to create an array for storing pose info.
 	}
+}
+
+void ConnectionNode::PulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr pulse_message)
+{
+	RCLCPP_INFO(rclcpp::get_logger("ConnectionNode"),
+	            "Successfully received /pulse.");
+	std::cout << pulse_message->detector_id << std::endl;
 }
 
 } // namespace uavrt_connection

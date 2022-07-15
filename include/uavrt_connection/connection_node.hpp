@@ -36,6 +36,8 @@
 #include "mavsdk/system.h"
 
 // Project header files
+#include "uavrt_interfaces/msg/pulse.hpp"
+
 #include "uavrt_connection/telemetry_handler.hpp"
 #include "uavrt_connection/command_handler.hpp"
 
@@ -54,6 +56,7 @@ explicit ConnectionNode(const rclcpp::NodeOptions &options,
 private:
 // Private member functions - ROS 2 related
 void AntennaPoseCallback();
+void PulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr pulse_message);
 
 // Private member functions - MAVSDK related
 void ConnectionCallback(bool is_connected);
@@ -62,6 +65,8 @@ void ConnectionCallback(bool is_connected);
 int queue_size_ = 10;
 
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr antenna_pose_publisher_;
+rclcpp::Subscription<uavrt_interfaces::msg::Pulse>::SharedPtr pulse_subscriber_;
+
 std_msgs::msg::Header antenna_pose_header_;
 geometry_msgs::msg::PoseStamped antenna_pose_pose_stamped_;
 geometry_msgs::msg::Pose antenna_pose_pose_;

@@ -38,8 +38,14 @@ double GetPositionLatitude();
 double GetPositionLongitude();
 float GetPositionAltitude();
 
+float GetQuaternionW();
+float GetQuaternionX();
+float GetQuaternionY();
+float GetQuaternionZ();
+
 private:
 void PositionCallback(mavsdk::Telemetry::Position position);
+void QuaternionCallback(mavsdk::Telemetry::Quaternion quaternion);
 
 mavsdk::Telemetry mavsdk_telemetry;
 
@@ -47,6 +53,12 @@ mavsdk::Telemetry mavsdk_telemetry;
 double position_latitude_;     // Latitude in degrees (range: -90 to +90)
 double position_longitude_;     // Longitude in degrees (range: -180 to +180)
 float position_altitude_;     // Altitude AMSL (above mean sea level) in metres
+
+// https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_quaternion.html
+float quaternion_w_;
+float quaternion_x_;
+float quaternion_y_;
+float quaternion_z_;
 
 };
 

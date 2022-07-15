@@ -15,7 +15,7 @@
 // this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // C++ standard library headers
-#include <chrono>
+#include <functional>
 #include <memory>
 
 // Project header files
@@ -30,6 +30,9 @@ TelemetryHandler::TelemetryHandler(std::shared_ptr<mavsdk::System> system) :
 	mavsdk_telemetry.subscribe_position(std::bind(&TelemetryHandler::PositionCallback,
 	                                              this,
 	                                              std::placeholders::_1));
+	mavsdk_telemetry.subscribe_attitude_quaternion(std::bind(&TelemetryHandler::QuaternionCallback,
+	                                                         this,
+	                                                         std::placeholders::_1));
 }
 
 double TelemetryHandler::GetPositionLatitude()
@@ -47,6 +50,26 @@ float TelemetryHandler::GetPositionAltitude()
 	return this->position_altitude_;
 }
 
+float TelemetryHandler::GetQuaternionW()
+{
+	return this->quaternion_w_;
+}
+
+float TelemetryHandler::GetQuaternionX()
+{
+	return this->quaternion_x_;
+}
+
+float TelemetryHandler::GetQuaternionY()
+{
+	return this->quaternion_y_;
+}
+
+float TelemetryHandler::GetQuaternionZ()
+{
+	return this->quaternion_z_;
+}
+
 // I'm not sure how to detect if there was an error getting the position
 // attributes from the Telemetry object. E.g. the Pixhawk is unplugged, then
 // the statements below should report that there was an issue.
@@ -61,6 +84,14 @@ void TelemetryHandler::PositionCallback(mavsdk::Telemetry::Position position)
 	this->position_latitude_ = position.latitude_deg;
 	this->position_longitude_ = position.longitude_deg;
 	this->position_altitude_ = position.absolute_altitude_m;
+}
+
+void TelemetryHandler::QuaternionCallback(mavsdk::Telemetry::Quaternion quaternion)
+{
+	this->quaternion_w_ = quaternion.w;
+	this->quaternion_x_ = quaternion.x;
+	this->quaternion_y_ = quaternion.y;
+	this->quaternion_z_ = quaternion.z;
 }
 
 } // namespace uavrt_connection

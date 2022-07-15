@@ -58,7 +58,8 @@ ament_target_dependencies(connection_node
   rclcpp
   std_msgs
   geometry_msgs
-  MAVSDK)
+  MAVSDK
+  uavrt_interfaces)
 
 # libtelemetry_handler.so
 add_library(telemetry_handler SHARED
