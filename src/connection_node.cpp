@@ -35,7 +35,9 @@ namespace uavrt_connection
 // using parameters.
 // https://docs.ros2.org/galactic/api/rclcpp/classrclcpp_1_1NodeOptions.html
 ConnectionNode::ConnectionNode(const rclcpp::NodeOptions& options)
-	: Node("ConnectionNode", options), TelemetryHandlerObject()
+	: Node("ConnectionNode", options),
+	TelemetryHandlerObject(),
+	CommandHandlerObject()
 {
 	// In order to use rclcpp::Logger, you need to supply the get_logger()
 	// function with a rclcpp::Node or you can call it while passing in the
@@ -57,9 +59,9 @@ ConnectionNode::ConnectionNode(const rclcpp::NodeOptions& options)
 	// unable to connect to my serial device when using add_serial_connection().
 	// https://mavsdk.mavlink.io/v0.33.0/en/api_reference/classmavsdk_1_1_mavsdk.html
 	// For example, to connect to the Pixhawk use URL: "serial:///dev/ttyACM0"
-	serial_mavsdk.add_any_connection("serial:///dev/ttyACM0");
+	serial_mavsdk_.add_any_connection("serial:///dev/ttyACM0");
 	// For example, to connect to the simulator use URL: "udp://:14540"
-	udp_mavsdk.add_udp_connection("udp://:14540");
+	udp_mavsdk_.add_udp_connection("udp://:14540");
 
 	// The MAVSDK developers listed two possible ways to discover a system.
 	// One method was using the C++ future library and the other was to use sleep.
@@ -73,12 +75,13 @@ ConnectionNode::ConnectionNode(const rclcpp::NodeOptions& options)
 	// shutdown after breaking from the while loop.
 	// https://mavsdk.mavlink.io/main/en/cpp/api_changes.html#discovery-of-systems
 	// https://docs.ros2.org/galactic/api/rclcpp/namespacerclcpp.html#adbe8ffd2b1769e897f2c50d560812b43
-	while (serial_mavsdk.systems().size() == 0 &&
-	       udp_mavsdk.systems().size() == 0 &&
+	while (serial_mavsdk_.systems().size() == 0 &&
+	       udp_mavsdk_.systems().size() == 0 &&
 	       rclcpp::ok() == true)
 	{
 		RCLCPP_ERROR(rclcpp::get_logger("ConnectionNode"), "MAVSDK connection failed.");
 		ros_sleep_rate.sleep();
+		std::cout << "serial size: " << serial_mavsdk_.systems().size() << std::endl;
 	}
 
 	GetSystem();
@@ -87,10 +90,17 @@ ConnectionNode::ConnectionNode(const rclcpp::NodeOptions& options)
 	                                          this,
 	                                          std::placeholders::_1));
 
+	mavlink_passthrough_ = std::make_shared<mavsdk::MavlinkPassthrough>(system_);
+
+	mavlink_passthrough_->intercept_incoming_messages_async(std::bind(&ConnectionNode::CommandCallback,
+	                                                                 this,
+	                                                                 std::placeholders::_1));
+
 	antenna_pose_publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
 		"/antennaPose", queue_size_);
 	antenna_pose_timer_ = this->create_wall_timer(
-		antenna_pose_period_ms_, std::bind(&ConnectionNode::AntennaPoseCallback, this));
+		antenna_pose_period_ms_, std::bind(&ConnectionNode::AntennaPoseCallback,
+		                                   this));
 
 }
 
@@ -99,16 +109,16 @@ void ConnectionNode::GetSystem()
 	// A serial connection will be used in the field but a UDP connection will
 	// be necessary during indoors testing. This setup allows us to first check
 	// if a serial option is available. If not, check UDP.
-	if (serial_mavsdk.systems().size() == 1)
+	if (serial_mavsdk_.systems().size() == 1)
 	{
-		system_ = serial_mavsdk.systems().at(0);
+		system_ = serial_mavsdk_.systems().at(0);
 		RCLCPP_INFO(rclcpp::get_logger("ConnectionNode"),
 		            "Serial - MAVSDK connection successfully established.");
 		connection_status_ = true;
 	}
-	else if(udp_mavsdk.systems().size() == 1)
+	else if(udp_mavsdk_.systems().size() == 1)
 	{
-		system_ = udp_mavsdk.systems().at(0);
+		system_ = udp_mavsdk_.systems().at(0);
 		RCLCPP_INFO(rclcpp::get_logger("ConnectionNode"),
 		            "UDP - MAVSDK connection successfully established.");
 		connection_status_ = true;
@@ -127,18 +137,38 @@ void ConnectionNode::ConnectionCallback(bool is_connected)
 	connection_status_ = is_connected;
 	RCLCPP_ERROR(rclcpp::get_logger("ConnectionNode"),
 	             "System has timed out! Attempting to reconnect.");
-
-	// std::cout << "serial size: " << serial_mavsdk.systems().size() << std::endl;
-	// serial_mavsdk.systems().pop_back();
+	// udp_mavsdk_.systems().clear();
+	// std::cout << "serial size: " << serial_mavsdk_.systems().size() << std::endl;
+	// serial_mavsdk_.systems().pop_back();
 	// //Iterate through detected systems
-	// for (auto system : serial_mavsdk.systems()) {
+	// for (auto system : serial_mavsdk_.systems()) {
 	// 	std::cout << "Found system with MAVLink system ID: " << static_cast<int>(system->get_system_id())
 	// 	          << ", connected: " << (system->is_connected() ? "yes" : "no")
 	// 	          << ", has autopilot: " << (system->has_autopilot() ? "yes" : "no") << '\n';
 	// }
-	// std::cout << "serial size: " << serial_mavsdk.systems().size() << std::endl;
+	// std::cout << "serial size: " << serial_mavsdk_.systems().size() << std::endl;
 
 	GetSystem();
+}
+
+bool ConnectionNode::CommandCallback(mavlink_message_t& message)
+{
+	if (message.msgid == MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY)
+	{
+		mavlink_debug_float_array_t debugFloatArray;
+
+		mavlink_msg_debug_float_array_decode(&message, &debugFloatArray);
+
+		switch (debugFloatArray.array_id)
+		{
+		case 1:
+			// _handleTagCommand(debugFloatArray);
+			break;
+		}
+	}
+
+	// To drop a message, return 'false' from the callback.
+	return true;
 }
 
 void ConnectionNode::AntennaPoseCallback()
@@ -147,9 +177,9 @@ void ConnectionNode::AntennaPoseCallback()
 	{
 		// Not sure how to make this a member variable to avoid remaking it
 		// each time.
-		std::shared_ptr<mavsdk::Telemetry> mavsdk_telemetry = std::make_shared<mavsdk::Telemetry>(system_);
+		mavsdk::Telemetry mavsdk_telemetry = mavsdk::Telemetry(system_);
 
-		TelemetryHandlerObject.RefreshTelemetry(mavsdk_telemetry);
+		// TelemetryHandlerObject.RefreshTelemetry(mavsdk_telemetry);
 
 		// http://docs.ros.org/en/lunar/api/std_msgs/html/msg/Header.html
 		antenna_pose_header_ = std_msgs::msg::Header();

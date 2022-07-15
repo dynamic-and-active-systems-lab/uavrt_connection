@@ -36,13 +36,13 @@ TelemetryHandler::TelemetryHandler()
 // what I'm supposed to be comparing to the enum value for success or failure.
 // There isn't a result associated with the statements below.
 // https://mavsdk.mavlink.io/main/en/cpp/guide/general_usage.html#error-handling
-void TelemetryHandler::RefreshTelemetry(std::shared_ptr<mavsdk::Telemetry> mavsdk_telemetry)
+void TelemetryHandler::RefreshTelemetry(mavsdk::Telemetry mavsdk_telemetry)
 {
     // Poll for 'Position' (blocking).
     // https://mavsdk.mavlink.io/main/en/cpp/api_reference/classmavsdk_1_1_telemetry.html#classmavsdk_1_1_telemetry_1a2299da1bc63313c429f07ab0fdbe5335
-	this->position_latitude_ = mavsdk_telemetry->position().latitude_deg;
-	this->position_longitude_ = mavsdk_telemetry->position().longitude_deg;
-	this->position_altitude_ = mavsdk_telemetry->position().absolute_altitude_m;
+	this->position_latitude_ = mavsdk_telemetry.position().latitude_deg;
+	this->position_longitude_ = mavsdk_telemetry.position().longitude_deg;
+	this->position_altitude_ = mavsdk_telemetry.position().absolute_altitude_m;
 }
 
 } // namespace uavrt_connection

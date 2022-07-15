@@ -67,17 +67,26 @@ ament_target_dependencies(telemetry_handler
   rclcpp
   MAVSDK)
 
+# libcommand_handler.so
+add_library(command_handler SHARED
+  src/command_handler.cpp)
+ament_target_dependencies(command_handler
+  rclcpp
+  MAVSDK)
+
 add_executable(main
   src/main.cpp)
 
 target_link_libraries(main
   connection_node
   telemetry_handler
+  command_handler
   MAVSDK::mavsdk)
 
 install(TARGETS
   connection_node
   telemetry_handler
+  command_handler
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)

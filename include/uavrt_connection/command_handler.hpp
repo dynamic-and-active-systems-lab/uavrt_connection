@@ -14,13 +14,12 @@
 // You should have received a copy of the GNU General Public License along with
 // this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_HANDLER_H_
-#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_HANDLER_H_
+#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_HANDLER_H_
+#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_HANDLER_H_
 
 // ROS 2 header files
 #include "rclcpp/rclcpp.hpp"
 
-// MAVSDK header files
 // MAVSDK header files
 #include "mavsdk/mavsdk.h"
 #include "mavsdk/system.h"
@@ -29,17 +28,10 @@
 namespace uavrt_connection
 {
 
-class TelemetryHandler
+class CommandHandler
 {
 public:
-explicit TelemetryHandler();
-
-void RefreshTelemetry(mavsdk::Telemetry mavsdk_telemetry);
-
-// https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_position.html#structmavsdk_1_1_telemetry_1_1_position_1
-double position_latitude_; // Latitude in degrees (range: -90 to +90)
-double position_longitude_; // Longitude in degrees (range: -180 to +180)
-float position_altitude_; // Altitude AMSL (above mean sea level) in metres
+explicit CommandHandler();
 
 private:
 
@@ -47,4 +39,4 @@ private:
 
 }  // namespace uavrt_connection
 
-#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_HANDLER_H_
+#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_HANDLER_H_
