@@ -32,16 +32,21 @@ namespace uavrt_connection
 class TelemetryHandler
 {
 public:
-explicit TelemetryHandler();
+explicit TelemetryHandler(std::shared_ptr<mavsdk::System> system);
 
-void RefreshTelemetry(mavsdk::Telemetry mavsdk_telemetry);
-
-// https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_position.html#structmavsdk_1_1_telemetry_1_1_position_1
-double position_latitude_; // Latitude in degrees (range: -90 to +90)
-double position_longitude_; // Longitude in degrees (range: -180 to +180)
-float position_altitude_; // Altitude AMSL (above mean sea level) in metres
+double GetPositionLatitude();
+double GetPositionLongitude();
+float GetPositionAltitude();
 
 private:
+void PositionCallback(mavsdk::Telemetry::Position position);
+
+mavsdk::Telemetry mavsdk_telemetry;
+
+// https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_position.html#structmavsdk_1_1_telemetry_1_1_position_1
+double position_latitude_;     // Latitude in degrees (range: -90 to +90)
+double position_longitude_;     // Longitude in degrees (range: -180 to +180)
+float position_altitude_;     // Altitude AMSL (above mean sea level) in metres
 
 };
 

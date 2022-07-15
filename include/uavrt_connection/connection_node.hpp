@@ -34,8 +34,6 @@
 // MAVSDK header files
 #include "mavsdk/mavsdk.h"
 #include "mavsdk/system.h"
-#include "mavsdk/plugins/telemetry/telemetry.h"
-#include "mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h"
 
 // Project header files
 #include "uavrt_connection/telemetry_handler.hpp"
@@ -44,35 +42,21 @@
 namespace uavrt_connection
 {
 
-enum class CommandID
-{
-    CommandIDAck = 1, // Ack response to command
-    CommandIDTag = 2, // Tag info
-    CommandIDPulse = 3 // Detected pulse value
-};
-
-enum class AckIndex
-{
-    AckIndexCommand = 0, // Command being acked
-    AckIndexResult = 2 // Command result - 1 success, 0 failure
-};
-
 // Create the Connection object by inheriting from rclcpp::Node.
 // Note: This class doesn't contain a (virtual) deconstructor since it is not
 // expected to be inherited from.
 class ConnectionNode : public rclcpp::Node
 {
 public:
-explicit ConnectionNode(const rclcpp::NodeOptions &options);
+explicit ConnectionNode(const rclcpp::NodeOptions &options,
+                        std::shared_ptr<mavsdk::System> system);
 
 private:
 // Private member functions - ROS 2 related
 void AntennaPoseCallback();
 
 // Private member functions - MAVSDK related
-void GetSystem();
 void ConnectionCallback(bool is_connected);
-bool CommandCallback(mavlink_message_t& message);
 
 // Private member variables - ROS 2 related
 int queue_size_ = 10;
@@ -99,11 +83,7 @@ static constexpr auto antenna_pose_period_ms_ = std::chrono::milliseconds(500);
 rclcpp::TimerBase::SharedPtr antenna_pose_timer_;
 
 // Private member variables - MAVSDK related
-mavsdk::Mavsdk serial_mavsdk_;
-mavsdk::Mavsdk udp_mavsdk_;
-std::shared_ptr<mavsdk::System> system_;
 bool connection_status_;
-std::shared_ptr<mavsdk::MavlinkPassthrough> mavlink_passthrough_;
 
 // Private member objects
 TelemetryHandler TelemetryHandlerObject;

@@ -24,9 +24,32 @@
 namespace uavrt_connection
 {
 
-CommandHandler::CommandHandler()
+CommandHandler::CommandHandler(std::shared_ptr<mavsdk::System> system) :
+	mavlink_passthrough_(system)
 {
+	mavlink_passthrough_.intercept_incoming_messages_async(std::bind(&CommandHandler::CommandCallback,
+	                                                                  this,
+	                                                                  std::placeholders::_1));
+}
 
+bool CommandHandler::CommandCallback(mavlink_message_t& message)
+{
+	if (message.msgid == MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY)
+	{
+		mavlink_debug_float_array_t debugFloatArray;
+
+		mavlink_msg_debug_float_array_decode(&message, &debugFloatArray);
+
+		switch (debugFloatArray.array_id)
+		{
+		case 1:
+			// _handleTagCommand(debugFloatArray);
+			break;
+		}
+	}
+
+	// To drop a message, return 'false' from the callback.
+	return true;
 }
 
 } // namespace uavrt_connection

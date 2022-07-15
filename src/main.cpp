@@ -47,14 +47,98 @@
 
 // C++ standard library headers
 #include <memory>
+#include <future>
+#include <chrono>
+
+// ROS 2 header files
+#include "rclcpp/rclcpp.hpp"
+
+// MAVSDK header files
+#include "mavsdk/mavsdk.h"
+#include "mavsdk/system.h"
 
 // Project header files
 #include "uavrt_connection/connection_node.hpp"
+
+static void usage()
+{
+	std::cerr << "Usage : Enter a '0' to use a serial connection "
+	          << "or enter a '1' to use an UDP connection. \n"
+	          << "For Serial, the connection string will be: 'serial:///dev/ttyACM0', \n"
+	          << "and expects a PX4 autopilot to be plugged into this port. \n"
+	          << "For UDP, the connection string will be: 'udp://:14540', \n"
+	          << "and expects a Gazebo SITL to be running at this port. \n";
+}
+
+std::shared_ptr<mavsdk::System> get_system(mavsdk::Mavsdk& mavsdk)
+{
+	RCLCPP_INFO(rclcpp::get_logger("Main"), "Waiting to discover system...");
+	auto system_promise = std::promise<std::shared_ptr<mavsdk::System> >{};
+	auto system_future = system_promise.get_future();
+
+	// We wait for new systems to be discovered, once we find one that has an
+	// autopilot, we decide to use it.
+	mavsdk.subscribe_on_new_system([&mavsdk, &system_promise]()
+	{
+		auto system = mavsdk.systems().back();
+
+		if (system->has_autopilot()) {
+		    // std::cout << "\n";
+		    RCLCPP_INFO(rclcpp::get_logger("Main"), "Discovered autopilot.");
+
+		    // Unsubscribe again as we only want to find one system.
+		    mavsdk.subscribe_on_new_system(nullptr);
+		    system_promise.set_value(system);
+		}
+	});
+
+	// We usually receive heartbeats at 1Hz
+	// This value should be greater than 1
+	if (system_future.wait_for(std::chrono::seconds(3)) ==
+	    std::future_status::timeout)
+	{
+		RCLCPP_ERROR(rclcpp::get_logger("Main"), "No autopilot found.");
+		return {};
+	}
+
+	// Get discovered system now.
+	return system_future.get();
+}
+
 
 int main(int argc, char *argv[])
 {
 	// Force flush of the stdout buffer.
 	setvbuf(stdout, NULL, _IONBF, BUFSIZ);
+
+	// Exit the program if the user does not input the necessary arguement.
+	if (argc != 2) { usage(); return 1; }
+
+	mavsdk::Mavsdk mavsdk;
+	mavsdk::ConnectionResult connection_result;
+
+	// Connection URL format should be:
+	// For TCP : tcp://[server_host][:server_port]
+	// For UDP : udp://[bind_host][:bind_port]
+	// For Serial : serial:///path/to/serial/dev[:baudrate]
+	// mavsdk.add_serial_connection() should work here as well, but I was
+	// unable to connect to my serial device when using add_serial_connection().
+	// https://mavsdk.mavlink.io/v0.33.0/en/api_reference/classmavsdk_1_1_mavsdk.html
+	// For example, to connect to the PX4 autopilot use URL: "serial:///dev/ttyACM0"
+	// For example, to connect to the Gazebo SITL use URL: "udp://:14540"
+	if ((argv[1]) == 0)
+	{ connection_result = mavsdk.add_any_connection("serial:///dev/ttyACM0"); }
+	else
+	{ connection_result = mavsdk.add_any_connection("udp://:14540"); }
+
+	if (connection_result != mavsdk::ConnectionResult::Success) {
+		RCLCPP_ERROR(rclcpp::get_logger("Main"), "Connection failed.");
+		return 1;
+	}
+
+	std::shared_ptr<mavsdk::System> system = get_system(mavsdk);
+
+	if (!system) { return 1; }
 
 	// Initialize any global resources needed by the middleware and the client library.
 	// This will also parse command line arguments one day (as of (ROS 2) Beta 1 they are not used).
@@ -71,7 +155,8 @@ int main(int argc, char *argv[])
 
 	// Add some nodes to the executor which provide work for the executor during its "spin" function.
 	// An example of available work is executing a subscription callback, or a timer callback.
-	auto connection = std::make_shared<uavrt_connection::ConnectionNode>(options);
+	auto connection = std::make_shared<uavrt_connection::ConnectionNode>(options,
+	                                                                     system);
 	exec.add_node(connection);
 
 	// spin will block until work comes in, execute work as it becomes available, and keep blocking.

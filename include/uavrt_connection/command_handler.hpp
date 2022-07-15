@@ -23,17 +23,33 @@
 // MAVSDK header files
 #include "mavsdk/mavsdk.h"
 #include "mavsdk/system.h"
-#include "mavsdk/plugins/telemetry/telemetry.h"
+#include "mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h"
 
 namespace uavrt_connection
 {
 
+enum class CommandID
+{
+	CommandIDAck = 1,         // Ack response to command
+	CommandIDTag = 2,         // Tag info
+	CommandIDPulse = 3         // Detected pulse value
+};
+
+enum class AckIndex
+{
+	AckIndexCommand = 0,         // Command being acked
+	AckIndexResult = 2         // Command result - 1 success, 0 failure
+};
+
 class CommandHandler
 {
 public:
-explicit CommandHandler();
+explicit CommandHandler(std::shared_ptr<mavsdk::System> system);
 
 private:
+bool CommandCallback(mavlink_message_t& message);
+
+mavsdk::MavlinkPassthrough mavlink_passthrough_;
 
 };
 
