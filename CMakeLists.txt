@@ -66,6 +66,7 @@ add_library(telemetry_handler SHARED
   src/telemetry_handler.cpp)
 ament_target_dependencies(telemetry_handler
   rclcpp
+  geometry_msgs
   MAVSDK)
 
 # libcommand_handler.so
@@ -73,7 +74,8 @@ add_library(command_handler SHARED
   src/command_handler.cpp)
 ament_target_dependencies(command_handler
   rclcpp
-  MAVSDK)
+  MAVSDK
+  uavrt_interfaces)
 
 add_executable(main
   src/main.cpp)

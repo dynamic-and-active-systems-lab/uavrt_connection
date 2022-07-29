@@ -49,6 +49,7 @@
 #include <memory>
 #include <future>
 #include <chrono>
+#include <string>
 
 // ROS 2 header files
 #include "rclcpp/rclcpp.hpp"
@@ -83,7 +84,6 @@ std::shared_ptr<mavsdk::System> get_system(mavsdk::Mavsdk& mavsdk)
 		auto system = mavsdk.systems().back();
 
 		if (system->has_autopilot()) {
-		    // std::cout << "\n";
 		    RCLCPP_INFO(rclcpp::get_logger("Main"), "Discovered autopilot.");
 
 		    // Unsubscribe again as we only want to find one system.
@@ -94,7 +94,7 @@ std::shared_ptr<mavsdk::System> get_system(mavsdk::Mavsdk& mavsdk)
 
 	// We usually receive heartbeats at 1Hz
 	// This value should be greater than 1
-	if (system_future.wait_for(std::chrono::seconds(3)) ==
+	if (system_future.wait_for(std::chrono::seconds(5)) ==
 	    std::future_status::timeout)
 	{
 		RCLCPP_ERROR(rclcpp::get_logger("Main"), "No autopilot found.");
@@ -114,6 +114,8 @@ int main(int argc, char *argv[])
 	// Exit the program if the user does not input the necessary arguement.
 	if (argc != 2) { usage(); return 1; }
 
+	int arg_val = std::stoi(argv[1]);
+
 	mavsdk::Mavsdk mavsdk;
 	mavsdk::ConnectionResult connection_result;
 
@@ -126,19 +128,29 @@ int main(int argc, char *argv[])
 	// https://mavsdk.mavlink.io/v0.33.0/en/api_reference/classmavsdk_1_1_mavsdk.html
 	// For example, to connect to the PX4 autopilot use URL: "serial:///dev/ttyACM0"
 	// For example, to connect to the Gazebo SITL use URL: "udp://:14540"
-	if ((argv[1]) == 0)
+	if (arg_val == 0)
 	{ connection_result = mavsdk.add_any_connection("serial:///dev/ttyACM0"); }
-	else
+	else if (arg_val == 1)
 	{ connection_result = mavsdk.add_any_connection("udp://:14540"); }
+	else
+	{
+		RCLCPP_ERROR(rclcpp::get_logger("Main"), "Illegal input.");
+		return 1;
+	}
 
-	if (connection_result != mavsdk::ConnectionResult::Success) {
+	if (connection_result != mavsdk::ConnectionResult::Success)
+	{
 		RCLCPP_ERROR(rclcpp::get_logger("Main"), "Connection failed.");
 		return 1;
 	}
 
 	std::shared_ptr<mavsdk::System> system = get_system(mavsdk);
 
-	if (!system) { return 1; }
+	if (!system)
+	{
+		RCLCPP_ERROR(rclcpp::get_logger("Main"), "System object is not valid.");
+		return 1;
+	}
 
 	// Initialize any global resources needed by the middleware and the client library.
 	// This will also parse command line arguments one day (as of (ROS 2) Beta 1 they are not used).

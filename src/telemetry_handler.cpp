@@ -80,7 +80,7 @@ float TelemetryHandler::GetQuaternionZ()
 void TelemetryHandler::PositionCallback(mavsdk::Telemetry::Position position)
 {
 	// Poll for 'Position' (blocking).
-	// https://mavsdk.mavlink.io/main/en/cpp/api_reference/classmavsdk_1_1_telemetry.html#classmavsdk_1_1_telemetry_1a2299da1bc63313c429f07ab0fdbe5335
+	// https://mavsdk.mavlink.io/main/en/cpp/api_reference/classmavsdk_1_1_telemetry.html#classmavsdk_1_1_telemetry_1a61bda57b3ca47000ea7e4758b2a33134
 	this->position_latitude_ = position.latitude_deg;
 	this->position_longitude_ = position.longitude_deg;
 	this->position_altitude_ = position.absolute_altitude_m;
@@ -88,6 +88,8 @@ void TelemetryHandler::PositionCallback(mavsdk::Telemetry::Position position)
 
 void TelemetryHandler::QuaternionCallback(mavsdk::Telemetry::Quaternion quaternion)
 {
+    // Subscribe to 'attitude' updates (quaternion).
+    // https://mavsdk.mavlink.io/main/en/cpp/api_reference/classmavsdk_1_1_telemetry.html#classmavsdk_1_1_telemetry_1afa6c079d48bc0c0a3287ac095ec290b9
 	this->quaternion_w_ = quaternion.w;
 	this->quaternion_x_ = quaternion.x;
 	this->quaternion_y_ = quaternion.y;

@@ -25,31 +25,67 @@
 #include "mavsdk/system.h"
 #include "mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h"
 
+// Project header files
+#include "uavrt_interfaces/msg/tag_def.hpp"
+
 namespace uavrt_connection
 {
 
 enum class CommandID
 {
-	CommandIDAck = 1,         // Ack response to command
-	CommandIDTag = 2,         // Tag info
-	CommandIDPulse = 3         // Detected pulse value
+	// Ack response to command
+	CommandIDAck = 1,
+	// Tag info
+	CommandIDTag = 2,
+	// Detected pulse value
+	CommandIDPulse = 3
 };
 
 enum class AckIndex
 {
-	AckIndexCommand = 0,         // Command being acked
-	AckIndexResult = 2         // Command result - 1 success, 0 failure
+	// Command being acked
+	AckIndexCommand = 0,
+	// Command result - 1 success, 0 failure
+	AckIndexResult = 2
+};
+
+enum class TagIndex
+{
+	// Tag id (uint 32)
+	TagIndexID = 0,
+	// Frequency - 6 digits shifted by three decimals, NNNNNN means NNN.NNN000 Mhz (uint 32)
+	TagIndexFrequency = 1,
+	// Pulse duration
+	TagIndexDurationMSecs = 2,
+	// Intra-pulse duration 1
+	TagIndexIntraPulse1MSecs = 3,
+	// Intra-pulse duration 2
+	TagIndexIntraPulse2MSecs = 4,
+	// Intra-pulse uncertainty
+	TagIndexIntraPulseUncertainty = 5,
+	// Intra-pulse jitter
+	TagIndexIntraPulseJitter = 6,
+	// Max pulse value
+	TagIndexMaxPulse = 7
 };
 
 class CommandHandler
 {
 public:
-explicit CommandHandler(std::shared_ptr<mavsdk::System> system);
+explicit CommandHandler(std::shared_ptr<mavsdk::System> system,
+                        rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr tag_publisher_);
 
 private:
 bool CommandCallback(mavlink_message_t& message);
 
+void HandleAckCommand(uint32_t command_id, uint32_t result);
+void HandleTagCommand(const mavlink_debug_float_array_t& debugFloatArray);
+
 mavsdk::MavlinkPassthrough mavlink_passthrough_;
+
+rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr tag_publisher_local_;
+
+uavrt_interfaces::msg::TagDef tag_info_;
 
 };
 

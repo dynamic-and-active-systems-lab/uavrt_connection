@@ -37,6 +37,8 @@
 
 // Project header files
 #include "uavrt_interfaces/msg/pulse.hpp"
+#include "uavrt_interfaces/msg/pulse_pose.hpp"
+#include "uavrt_interfaces/msg/tag_def.hpp"
 
 #include "uavrt_connection/telemetry_handler.hpp"
 #include "uavrt_connection/command_handler.hpp"
@@ -44,9 +46,24 @@
 namespace uavrt_connection
 {
 
+enum class PositionArray
+{
+	LatitudeIndex = 0,
+	LongitudeIndex = 1,
+	AltitudeIndex = 2
+};
+
+enum class QuaternionArray
+{
+	WIndex = 0,
+	XIndex = 1,
+    YIndex = 2,
+    ZIndex = 3
+};
+
 // Create the Connection object by inheriting from rclcpp::Node.
-// Note: This class doesn't contain a (virtual) deconstructor since it is not
-// expected to be inherited from.
+// Note: This Connection Node doesn't contain a (virtual) deconstructor since
+// it is not expected to be inherited from.
 class ConnectionNode : public rclcpp::Node
 {
 public:
@@ -56,7 +73,7 @@ explicit ConnectionNode(const rclcpp::NodeOptions &options,
 private:
 // Private member functions - ROS 2 related
 void AntennaPoseCallback();
-void PulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr pulse_message);
+void DetectedPulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr pulse_message);
 
 // Private member functions - MAVSDK related
 void ConnectionCallback(bool is_connected);
@@ -65,7 +82,25 @@ void ConnectionCallback(bool is_connected);
 int queue_size_ = 10;
 
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr antenna_pose_publisher_;
+rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr tag_publisher_;
+
 rclcpp::Subscription<uavrt_interfaces::msg::Pulse>::SharedPtr pulse_subscriber_;
+
+// Info on array of vectors: https://www.geeksforgeeks.org/array-of-vectors-in-c-stl/
+// Make a 3 by 1 array of vectors expecting to be filled with type double
+// Note: Latitude and Longitude are doubles, but Altitude is a float. We eat
+// the extra memory cost to avoid using std::any/std::variant.
+// [[0] - Latitude
+// [0] - Longitude
+// [0]] - Altitude
+std::vector<double> position_array_[3];
+
+// Make a 4 by 1 array of vectors expecting to be filled with type float.
+// [[0] - w
+// [0] - x
+// [0] - y
+// [0]] - z
+std::vector<float> quaternion_array_[4];
 
 std_msgs::msg::Header antenna_pose_header_;
 geometry_msgs::msg::PoseStamped antenna_pose_pose_stamped_;
