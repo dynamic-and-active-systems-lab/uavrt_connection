@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License along with
 // this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// The format of the symbol name should be <PROJECT>_<PATH>_<FILE>_H_.
+// https://google.github.io/styleguide/cppguide.html#The__define_Guard
 #ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_COMPONENT_H_
 #define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_COMPONENT_H_
 
@@ -68,7 +70,7 @@ private:
 // ROS 2 related - Private functions
 void AntennaPoseCallback();
 
-void DetectedPulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr pulse_message);
+void DetectedPulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr detected_pulse_message);
 
 // MAVSDK related - Private functions
 void ConnectionCallback(bool is_connected);

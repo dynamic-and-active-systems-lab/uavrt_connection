@@ -20,7 +20,6 @@
 #include <memory>
 #include <vector>
 #include <tuple>
-#include <functional>
 #include <algorithm>
 #include <string>
 #include <cmath>
@@ -61,7 +60,7 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 		                                          std::placeholders::_1));
 
 	pulse_pose_publisher_ = this->create_publisher<uavrt_interfaces::msg::PulsePose>(
-		"/pulse_pose", queue_size_);
+		"/detected_pulse_pose", queue_size_);
 
 	// MAVSDK related - Subsriber rate variables
 	mavsdk_telemetry.set_rate_position(postion_subsribe_rate_);
@@ -255,16 +254,18 @@ std::tuple<double, double, double> TelemetryComponent::InterpolatePosition(
 {
 	// Iterator is of type std::vector<double>::iterator
 	// This will return the first value that is less than the key
+    // Note: Mike had recommended starting the search from the end rather
+    // than the beginning to save processing time.
 	std::vector<double>::iterator upper_bound_iterator = std::upper_bound(
-		antenna_pose_time_vector_.begin(),
 		antenna_pose_time_vector_.end(),
+		antenna_pose_time_vector_.begin(),
 		detected_pulse_average_time,
 		std::greater<double>());
 
 	// This will return the first value that is greater than the key
 	std::vector<double>::iterator lower_bound_iterator = std::lower_bound(
+        antenna_pose_time_vector_.end(),
 		antenna_pose_time_vector_.begin(),
-		antenna_pose_time_vector_.end(),
 		detected_pulse_average_time,
 		std::less<double>());
 
@@ -273,7 +274,7 @@ std::tuple<double, double, double> TelemetryComponent::InterpolatePosition(
 	{
 		RCLCPP_ERROR(this->get_logger(),
 		             "There does not exist a stored time value that is lower "
-		             "and/or greater than the pulse average time.");
+		             "and/or greater than the pulse average time that was provided.");
 
 		return {0.0, 0.0, 0.0};
 	}
