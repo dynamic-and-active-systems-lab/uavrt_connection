@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License along with
 // this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_HANDLER_H_
-#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_HANDLER_H_
+#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_H_
+#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_H_
 
 // ROS 2 header files
 #include "rclcpp/rclcpp.hpp"
@@ -69,26 +69,33 @@ enum class TagIndex
 	TagIndexMaxPulse = 7
 };
 
-class CommandHandler
+class CommandComponent : public rclcpp::Node
 {
 public:
-explicit CommandHandler(std::shared_ptr<mavsdk::System> system,
-                        rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr tag_publisher_);
+explicit CommandComponent(const rclcpp::NodeOptions &options,
+                          std::shared_ptr<mavsdk::System> system);
 
 private:
+// ROS 2 related - Private functions
+
+// MAVSDK related - Private functions
 bool CommandCallback(mavlink_message_t& message);
 
 void HandleAckCommand(uint32_t command_id, uint32_t result);
 void HandleTagCommand(const mavlink_debug_float_array_t& debugFloatArray);
 
-mavsdk::MavlinkPassthrough mavlink_passthrough_;
+// ROS 2 related - Private variables
+rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr tag_publisher_;
 
-rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr tag_publisher_local_;
+int queue_size_ = 10;
 
 uavrt_interfaces::msg::TagDef tag_info_;
+
+// MAVSDK related - Private variables
+mavsdk::MavlinkPassthrough mavlink_passthrough_;
 
 };
 
 }  // namespace uavrt_connection
 
-#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_HANDLER_H_
+#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_H_

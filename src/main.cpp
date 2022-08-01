@@ -51,6 +51,9 @@
 #include <chrono>
 #include <string>
 
+//delete - only for debugging
+#include <iostream>
+
 // ROS 2 header files
 #include "rclcpp/rclcpp.hpp"
 
@@ -59,7 +62,8 @@
 #include "mavsdk/system.h"
 
 // Project header files
-#include "uavrt_connection/connection_node.hpp"
+#include "uavrt_connection/telemetry_component.hpp"
+#include "uavrt_connection/command_component.hpp"
 
 static void usage()
 {
@@ -73,6 +77,16 @@ static void usage()
 
 std::shared_ptr<mavsdk::System> get_system(mavsdk::Mavsdk& mavsdk)
 {
+	// In order to use rclcpp::Logger, you need to supply the get_logger()
+	// function with a rclcpp::Node or you can call it while passing in the
+	// name of the node. The second option does not check if the node actually
+	// exists. AFAIK, this method of using get_logger() does not incur any
+	// pentalies. This option is easier than passing in a pointer of
+	// the node object within constructors or creating a seperate getter.
+	// https://answers.ros.org/question/361542/ros-2-how-to-create-a-non-node-logger/
+	// However, since we need the different classes to be nodes to create and
+	// use subscribers, publishers, etc., we might as well use the first option
+	// for everywhere aside from main.
 	RCLCPP_INFO(rclcpp::get_logger("Main"), "Waiting to discover system...");
 	auto system_promise = std::promise<std::shared_ptr<mavsdk::System> >{};
 	auto system_future = system_promise.get_future();
@@ -94,7 +108,7 @@ std::shared_ptr<mavsdk::System> get_system(mavsdk::Mavsdk& mavsdk)
 
 	// We usually receive heartbeats at 1Hz
 	// This value should be greater than 1
-	if (system_future.wait_for(std::chrono::seconds(5)) ==
+	if (system_future.wait_for(std::chrono::seconds(3)) ==
 	    std::future_status::timeout)
 	{
 		RCLCPP_ERROR(rclcpp::get_logger("Main"), "No autopilot found.");
@@ -104,7 +118,6 @@ std::shared_ptr<mavsdk::System> get_system(mavsdk::Mavsdk& mavsdk)
 	// Get discovered system now.
 	return system_future.get();
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -157,19 +170,27 @@ int main(int argc, char *argv[])
 	// You must call this before using any other part of the ROS system.
 	// This should be called once per process.
 	// Command line arguments are not necessary for use within the uavrt_connection package.
-	// argc and argv are left here to maintain coherence with the ROS 2 boilerplate code.
+	// argc and argv are left here to maintain coherence with the ROS 2 boilerplate demo code.
 	rclcpp::init(argc, argv);
 
 	// Create an executor that will be responsible for execution of callbacks for a set of nodes.
 	// With this version, all callbacks will be called from within this thread (the main one).
-	rclcpp::executors::SingleThreadedExecutor exec;
+	// The Static Single-Threaded Executor optimizes the runtime costs for scanning the structure of a node.
+	// Refer to the following link for more information on the three types of executors:
+	// https://docs.ros.org/en/galactic/Concepts/About-Executors.html
+	rclcpp::executors::StaticSingleThreadedExecutor exec;
 	rclcpp::NodeOptions options;
 
 	// Add some nodes to the executor which provide work for the executor during its "spin" function.
 	// An example of available work is executing a subscription callback, or a timer callback.
-	auto connection = std::make_shared<uavrt_connection::ConnectionNode>(options,
-	                                                                     system);
-	exec.add_node(connection);
+	std::shared_ptr<uavrt_connection::TelemetryComponent> telemetry_component =
+		std::make_shared<uavrt_connection::TelemetryComponent>(options, system);
+	std::shared_ptr<uavrt_connection::CommandComponent> command_component =
+		std::make_shared<uavrt_connection::CommandComponent>(options, system);
+
+	// One thread of a Static Single-Threaded Executor is used to serve two nodes together.
+	exec.add_node(telemetry_component);
+	exec.add_node(command_component);
 
 	// spin will block until work comes in, execute work as it becomes available, and keep blocking.
 	// It will only be interrupted by Ctrl-C.

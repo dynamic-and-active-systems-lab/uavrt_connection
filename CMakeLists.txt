@@ -11,18 +11,20 @@
 # The methodology followed in this CMake file essentially creates a library for
 # each .cpp and then links that .cpp file with the main executable. Since these
 # .cpp files do not contain a main, they are more akin to ROS 2 components.
-# However, ROS 2 component functionality wasn't implemented as it didn't seem
-# necessary at the time. If you would like to know more about components and
-# plugins, I suggest the following blog post as a start:
+# However, I didn't utilize the "register component" functionality since it
+# didn't seem necessary at the time.
+# If you would like to know more about components and plugins, I suggest the
+# following blog post as a start:
 # https://ubuntu.com/blog/components-vs-plugins-in-ros-2
+# And then this ROS 2 documentation:
+# https://docs.ros.org/en/galactic/Concepts/About-Composition.html
 
 cmake_minimum_required(VERSION 3.8)
 project(uavrt_connection)
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+# Default to C++20
+# std::lerp functionality requires C++20
+set(CMAKE_CXX_STANDARD 20)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -51,28 +53,20 @@ find_package(uavrt_interfaces REQUIRED)
 
 include_directories(include)
 
-# libconnection_node.so
-add_library(connection_node SHARED
-  src/connection_node.cpp)
-ament_target_dependencies(connection_node
+# libtelemetry_component.so
+add_library(telemetry_component SHARED
+  src/telemetry_component.cpp)
+ament_target_dependencies(telemetry_component
   rclcpp
   std_msgs
   geometry_msgs
   MAVSDK
   uavrt_interfaces)
 
-# libtelemetry_handler.so
-add_library(telemetry_handler SHARED
-  src/telemetry_handler.cpp)
-ament_target_dependencies(telemetry_handler
-  rclcpp
-  geometry_msgs
-  MAVSDK)
-
-# libcommand_handler.so
-add_library(command_handler SHARED
-  src/command_handler.cpp)
-ament_target_dependencies(command_handler
+# libcommand_component.so
+add_library(command_component SHARED
+  src/command_component.cpp)
+ament_target_dependencies(command_component
   rclcpp
   MAVSDK
   uavrt_interfaces)
@@ -81,15 +75,13 @@ add_executable(main
   src/main.cpp)
 
 target_link_libraries(main
-  connection_node
-  telemetry_handler
-  command_handler
+  telemetry_component
+  command_component
   MAVSDK::mavsdk)
 
 install(TARGETS
-  connection_node
-  telemetry_handler
-  command_handler
+  telemetry_component
+  command_component
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)

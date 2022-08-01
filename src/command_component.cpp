@@ -20,25 +20,32 @@
 #include <string>
 
 // Project header files
-#include "uavrt_connection/command_handler.hpp"
+#include "uavrt_connection/command_component.hpp"
 
 namespace uavrt_connection
 {
 
-CommandHandler::CommandHandler(std::shared_ptr<mavsdk::System> system,
-                               rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr tag_publisher_) :
+CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
+                                   std::shared_ptr<mavsdk::System> system)
+	: Node("CommandComponent", options),
 	mavlink_passthrough_(system)
 {
-	mavlink_passthrough_.intercept_incoming_messages_async(std::bind(&CommandHandler::CommandCallback,
+	RCLCPP_INFO(this->get_logger(), "Command component successfully created.");
+
+	// ROS 2 related - Publisher callbacks
+	tag_publisher_ = this->create_publisher<uavrt_interfaces::msg::TagDef>(
+		"/tag_info", queue_size_);
+
+	// MAVSDK related
+	mavlink_passthrough_.intercept_incoming_messages_async(std::bind(&CommandComponent::CommandCallback,
 	                                                                 this,
 	                                                                 std::placeholders::_1));
-	tag_publisher_local_ = tag_publisher_;
 }
 
 // Static_cast is required for enum classes. Enum classes are safer than
 // enum since it's not an implicit conversion to a data type like int.
 // https://rules.sonarsource.com/cpp/RSPEC-3642
-bool CommandHandler::CommandCallback(mavlink_message_t& message)
+bool CommandComponent::CommandCallback(mavlink_message_t& message)
 {
 	if (message.msgid == MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY)
 	{
@@ -58,11 +65,12 @@ bool CommandHandler::CommandCallback(mavlink_message_t& message)
 	return true;
 }
 
-void CommandHandler::HandleAckCommand(uint32_t command_id, uint32_t result)
+void CommandComponent::HandleAckCommand(uint32_t command_id, uint32_t result)
 {
 	mavlink_message_t message;
 	mavlink_debug_float_array_t outgoing_debug_float_array;
 
+    // Better way to do this over using memset?
 	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
 
 	outgoing_debug_float_array.array_id = static_cast<int>(CommandID::CommandIDAck);
@@ -78,38 +86,34 @@ void CommandHandler::HandleAckCommand(uint32_t command_id, uint32_t result)
 	mavlink_passthrough_.send_message(message);
 }
 
-void CommandHandler::HandleTagCommand(const mavlink_debug_float_array_t& debug_float_array)
+void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug_float_array)
 {
 	uint32_t command_result = 1;
 
 	// https://github.com/dynamic-and-active-systems-lab/uavrt_interfaces/blob/main/msg/TagDef.msg
 	tag_info_ = uavrt_interfaces::msg::TagDef();
-	//
-	// tag_info_.tag_id = debug_float_array.data[static_cast<int>(TagIndex::TagIndexID)];
-	// tag_info_.frequency = debug_float_array.data[static_cast<int>(TagIndex::TagIndexFrequency)];
-	// tag_info_.pulse_duration = debug_float_array.data[static_cast<int>(TagIndex::TagIndexDurationMSecs)];
-	// tag_info_.interpulse_time_1 = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulse1MSecs)];
-	// tag_info_.interpulse_time_2 = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulse2MSecs)];
-	// tag_info_.interpulse_time_uncert = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulseUncertainty)];
-	// tag_info_.interpulse_time_jitter = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulseJitter)];
-	// // ?? _simulatorMaxPulse = debug_float_array.data[static_cast<int>(TagIndex::TagIndexMaxPulse)];
-	//
-	// // RCLCPP_INFO(rclcpp::get_logger("CommandHandler"),
-	// //             "Tag ID: %s - Frequency: %s",
-	// //             tag_info_.tag_id.c_str(),
-	// //             tag_info_.frequency.c_str());
-	//
-	// if (std::stoi(tag_info_.tag_id) == 0)
-	// {
-	// 	RCLCPP_ERROR(rclcpp::get_logger("CommandHandler"), "Invalid tag id of 0.");
-	// 	command_result  = 0;
-	// }
-	//
-	// HandleAckCommand(static_cast<int>(CommandID::CommandIDTag), command_result);
-	RCLCPP_INFO(rclcpp::get_logger("CommandHandler"),
+
+	tag_info_.tag_id = debug_float_array.data[static_cast<int>(TagIndex::TagIndexID)];
+	tag_info_.frequency = debug_float_array.data[static_cast<int>(TagIndex::TagIndexFrequency)];
+	tag_info_.pulse_duration = debug_float_array.data[static_cast<int>(TagIndex::TagIndexDurationMSecs)];
+	tag_info_.interpulse_time_1 = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulse1MSecs)];
+	tag_info_.interpulse_time_2 = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulse2MSecs)];
+	tag_info_.interpulse_time_uncert = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulseUncertainty)];
+	tag_info_.interpulse_time_jitter = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulseJitter)];
+	// ?? _simulatorMaxPulse = debug_float_array.data[static_cast<int>(TagIndex::TagIndexMaxPulse)];
+
+	if (tag_info_.tag_id[0] == 0)
+	{
+		RCLCPP_ERROR(this->get_logger(), "Invalid tag id of 0.");
+		command_result  = 0;
+	}
+
+	HandleAckCommand(static_cast<int>(CommandID::CommandIDTag), command_result);
+
+	RCLCPP_INFO(this->get_logger(),
 	            "Successfully received tag info.");
 
-	tag_publisher_local_->publish(tag_info_); 
+	tag_publisher_->publish(tag_info_);
 }
 
 } // namespace uavrt_connection
