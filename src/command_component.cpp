@@ -76,7 +76,7 @@ void CommandComponent::HandleAckCommand(uint32_t command_id, uint32_t result)
 	mavlink_message_t message;
 	mavlink_debug_float_array_t outgoing_debug_float_array;
 
-	// Better way to do this over using memset?
+	// Better way to do this other than using memset?
 	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
 
 	outgoing_debug_float_array.array_id = static_cast<int>(CommandID::CommandIDAck);
@@ -113,6 +113,8 @@ void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug
 		RCLCPP_ERROR(this->get_logger(), "Invalid tag id of 0.");
 		command_result  = 0;
 	}
+
+    std::cout << "command_result "<< command_result << std::endl;
 
 	HandleAckCommand(static_cast<int>(CommandID::CommandIDTag), command_result);
 

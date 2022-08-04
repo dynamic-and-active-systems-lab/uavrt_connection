@@ -30,10 +30,13 @@
 #include "geometry_msgs/msg/quaternion.hpp"
 
 // MAVSDK header files
-// MAVSDK header files
 #include "mavsdk/mavsdk.h"
 #include "mavsdk/system.h"
 #include "mavsdk/plugins/telemetry/telemetry.h"
+
+// Boost header files
+#include <boost/qvm/quat.hpp>
+#include <boost/qvm/quat_operations.hpp>
 
 // Project header files
 #include "uavrt_interfaces/msg/pulse.hpp"
@@ -55,6 +58,13 @@ enum class QuaternionArray
 	XIndex = 1,
 	YIndex = 2,
 	ZIndex = 3
+};
+
+struct InterpolationResults {
+	double interpolated_latitude;
+	double interpolated_logitude;
+	double interpolated_altitude;
+	boost::qvm::quat<float> interpolated_quaternion;
 };
 
 // Create the Telemetry component object by inheriting from rclcpp::Node.
@@ -79,7 +89,7 @@ void PositionCallback(mavsdk::Telemetry::Position position);
 void QuaternionCallback(mavsdk::Telemetry::Quaternion quaternion);
 
 // Private helper functions
-std::tuple<double, double, double> InterpolatePosition(double detected_pulse_average_time);
+InterpolationResults InterpolatePosition(double detected_pulse_average_time);
 
 // ROS 2 related - Private variables
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr antenna_pose_publisher_;

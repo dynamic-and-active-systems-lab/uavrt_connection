@@ -48,6 +48,13 @@ find_package(geometry_msgs REQUIRED)
 # https://mavsdk.mavlink.io/main/en/cpp/api_changes.html#linking
 find_package(MAVSDK REQUIRED)
 
+# Aug 24 2022: Install all Boost 1.71.0 libraries on Ubuntu with:
+# sudo apt update
+# sudo apt upgrade
+# sudo apt install libboost-all-dev
+# https://cmake.org/cmake/help/latest/module/FindBoost.html
+find_package(Boost)
+
 # UAV-RT packages
 find_package(uavrt_interfaces REQUIRED)
 
