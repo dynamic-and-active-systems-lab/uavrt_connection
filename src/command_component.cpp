@@ -114,8 +114,6 @@ void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug
 		command_result  = 0;
 	}
 
-    std::cout << "command_result "<< command_result << std::endl;
-
 	HandleAckCommand(static_cast<int>(CommandID::CommandIDTag), command_result);
 
 	RCLCPP_INFO(this->get_logger(),

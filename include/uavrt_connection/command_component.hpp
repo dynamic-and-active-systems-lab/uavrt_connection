@@ -40,7 +40,11 @@ enum class CommandID
 	// Tag info
 	CommandIDTag = 2,
 	// Detected pulse value
-	CommandIDPulse = 3
+	CommandIDPulse = 3,
+	// Radio system commands
+	CommandIDRSC = 4,
+	// Radio system state
+	CommandIDRSS = 5
 };
 
 enum class AckIndex
@@ -48,7 +52,7 @@ enum class AckIndex
 	// Command being acked
 	AckIndexCommand = 0,
 	// Command result - 1 success, 0 failure
-	AckIndexResult = 2
+	AckIndexResult = 1
 };
 
 enum class TagIndex
@@ -69,6 +73,27 @@ enum class TagIndex
 	TagIndexIntraPulseJitter = 6,
 	// Max pulse value
 	TagIndexMaxPulse = 7
+};
+
+enum class PulseIndex
+{
+
+};
+
+enum class RSCIndex
+{
+	// The command that will be executed
+	RSCIndexCommand = 0,
+	// The radio system or which process the command will be executed on
+	RSCIndexWho = 1,
+	// If a Detector is specified for ‘who’, this value will correspond to
+	// that Detector’s ID. Otherwise, this value will be ‘0’.
+	RSCIndexDetectorID = 2
+};
+
+enum class RSSIndex
+{
+
 };
 
 class CommandComponent : public rclcpp::Node
