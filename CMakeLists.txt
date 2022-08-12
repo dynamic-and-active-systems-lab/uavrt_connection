@@ -35,6 +35,8 @@ endif()
 # Make sure you add the dependencies to the package.xml file as well!
 # Else the program will crash and it won't tell you why.
 # find_package(<dependency> REQUIRED)
+
+# ROS 2 required packages
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 
@@ -59,6 +61,8 @@ find_package(Boost)
 find_package(uavrt_interfaces REQUIRED)
 
 include_directories(include)
+
+# ---> Add boost to target dep?
 
 # libtelemetry_component.so
 add_library(telemetry_component SHARED
