@@ -1,10 +1,12 @@
 # UAV-RT Connection package
 
-This ROS 2 Node is responsible for establishing and monintoring a UDP or serial onnection with the PX4, as well as encoding and decoding MAVLink messages that are passed through the companion computer [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) (with a 915 MHz radio) to the ground control station (GCS) PX4 (also connected to a 915 MHz radio). The GCS is running a custom version of QGroundControl (QGC) developed by [Don Gagne](https://github.com/DonLakeFlyer).
+This ROS 2 Node is responsible for establishing and monintoring a UDP or serial onnection with the PX4, as well as encoding and decoding MAVLink messages that are passed through the companion computer [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) (with a [SiK 915 MHz telemetry radio](https://ardupilot.org/copter/docs/common-sik-telemetry-radio.html#sik-telemetry-radio)) to the ground control station (GCS) PX4 (also connected to a 915 MHz radio). The GCS is running a custom version of QGroundControl (QGC) developed by [Don Gagne](https://github.com/DonLakeFlyer).
 
 The development of this code was funded via National Science Foundation grant no. 2104570.
 
 # Features
+
+Note: These features need to be updated. I will do this once I start the UAV-RT documenation, since text from that documentation will end up here. 
 
 - Establishes and monitors a serial or UDP connection with a [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) or [Gazebo SITL](https://ardupilot.org/dev/docs/using-gazebo-simulator-with-sitl.html)
   - This connection is established and utilized with [MAVSDK C++](https://mavsdk.mavlink.io/main/en/cpp/)
@@ -22,23 +24,19 @@ The development of this code was funded via National Science Foundation grant no
   - Supported messages are outlined in the "Tag Interface Control" document
  - The messages are stored within MAVLink's [DEBUG_FLOAT_ARRAY #350](https://mavlink.io/en/messages/common.html#DEBUG_FLOAT_ARRAY)
 
-# Basic operation
-
-TBD
-
 # Documentation
 
 The supporting documentation for this project can be found here. (TBD)
-
-TBD
 
 # System requirements
 
 The system requirments for the use of this package can be found here. (TBD)
 
+# Installaton
+
 TBD
 
-# Installaton
+# Basic operation
 
 TBD
 
