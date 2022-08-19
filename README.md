@@ -34,11 +34,53 @@ The system requirments for the use of this package can be found here. (TBD)
 
 # Installaton
 
-TBD
+This installation assumes that you have completed the installation process for uavrt_source. 
+
+### Linux
+
+Within a terminal window, run the following commands:
+
+```
+source /opt/ros/galactic/setup.bash
+cd ~/uavrt_workspace/uavrt_source/
+```
+
+You must be a member of the Dynamic and Active Systems Lab organization on Github. Authentication is currently required for the following command: 
+
+```
+git clone https://github.com/dynamic-and-active-systems-lab/uavrt_conneciton/
+cd ~/uavrt_workspace/
+```
+
+"All required rosdeps installed successfully" should be returned after the following command: 
+
+```
+rosdep install -i --from-path uavrt_source --rosdistro galactic -y
+```
+
+The following command will only build out the uavrt_connection package. This is done to isolate errors or warnings: 
+
+```
+colcon build --packages-select uavrt_connection
+source /opt/ros/galactic/setup.bash
+. install/local_setup.bash
+```
+
+If these commands didn't fail, then your installation of uavrt_connection should be complete. 
 
 # Basic operation
 
-TBD
+In order to run the uavrt_connection package in isolation, use the following command: 
+
+```
+ros2 run uavrt_connection main #
+```
+
+Where # corresponds to the type of connection you will be using. 
+
+Enter a '0' to use a serial connection or enter a '1' to use an UDP connection.
+For Serial, the connection string will be: 'serial:///dev/ttyACM0', and expects a PX4 autopilot to be plugged into this port. 
+For UDP, the connection string will be: 'udp://:14540', and expects a Gazebo SITL to be running at this port. 
 
 # Troubleshooting
 
