@@ -65,7 +65,7 @@
 #include "uavrt_connection/telemetry_component.hpp"
 #include "uavrt_connection/command_component.hpp"
 
-static void usage()
+static void Usage()
 {
 	std::cerr << "Usage : Enter a '0' to use a serial connection "
 	          << "or enter a '1' to use an UDP connection. \n"
@@ -75,7 +75,7 @@ static void usage()
 	          << "and expects a Gazebo SITL to be running at this port. \n";
 }
 
-std::shared_ptr<mavsdk::System> get_system(mavsdk::Mavsdk& mavsdk)
+std::shared_ptr<mavsdk::System> GetSystem(mavsdk::Mavsdk& mavsdk)
 {
 	// In order to use rclcpp::Logger, you need to supply the get_logger()
 	// function with a rclcpp::Node or you can call it while passing in the
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 	setvbuf(stdout, NULL, _IONBF, BUFSIZ);
 
 	// Exit the program if the user does not input the necessary arguement.
-	if (argc != 2) { usage(); return 1; }
+	if (argc != 2) { Usage(); return 1; }
 
 	int arg_val = std::stoi(argv[1]);
 
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	std::shared_ptr<mavsdk::System> system = get_system(mavsdk);
+	std::shared_ptr<mavsdk::System> system = GetSystem(mavsdk);
 
 	if (!system)
 	{
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 	// The Static Single-Threaded Executor optimizes the runtime costs for scanning the structure of a node.
 	// Refer to the following link for more information on the three types of executors:
 	// https://docs.ros.org/en/galactic/Concepts/About-Executors.html
-	rclcpp::executors::StaticSingleThreadedExecutor exec;
+	rclcpp::executors::StaticSingleThreadedExecutor executor;
 	rclcpp::NodeOptions options;
 
 	// Add some nodes to the executor which provide work for the executor during its "spin" function.
@@ -189,12 +189,12 @@ int main(int argc, char *argv[])
 		std::make_shared<uavrt_connection::CommandComponent>(options, system);
 
 	// One thread of a Static Single-Threaded Executor is used to serve two nodes together.
-	exec.add_node(telemetry_component);
-	exec.add_node(command_component);
+	executor.add_node(telemetry_component);
+	executor.add_node(command_component);
 
 	// spin will block until work comes in, execute work as it becomes available, and keep blocking.
 	// It will only be interrupted by Ctrl-C.
-	exec.spin();
+	executor.spin();
 
 	rclcpp::shutdown();
 
