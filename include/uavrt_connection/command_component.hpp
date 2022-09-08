@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License along with
 // this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_H_
-#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_H_
+#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_HPP_
+#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_HPP_
 
 // ROS 2 header files
 #include "rclcpp/rclcpp.hpp"
@@ -29,72 +29,10 @@
 #include "uavrt_interfaces/msg/pulse.hpp"
 #include "uavrt_interfaces/msg/pulse_pose.hpp"
 #include "uavrt_interfaces/msg/tag_def.hpp"
+#include "uavrt_interfaces/qgc_enum_class_definitions.hpp"
 
 namespace uavrt_connection
 {
-
-enum class CommandID
-{
-	// Ack response to command
-	CommandIDAck = 1,
-	// Tag info
-	CommandIDTag = 2,
-	// Detected pulse value
-	CommandIDPulse = 3,
-	// Radio system commands
-	CommandIDRSC = 4,
-	// Radio system state
-	CommandIDRSS = 5
-};
-
-enum class AckIndex
-{
-	// Command being acked
-	AckIndexCommand = 0,
-	// Command result - 1 success, 0 failure
-	AckIndexResult = 1
-};
-
-enum class TagIndex
-{
-	// Tag id (uint 32)
-	TagIndexID = 0,
-	// Frequency - 6 digits shifted by three decimals, NNNNNN means NNN.NNN000 Mhz (uint 32)
-	TagIndexFrequency = 1,
-	// Pulse duration
-	TagIndexDurationMSecs = 2,
-	// Intra-pulse duration 1
-	TagIndexIntraPulse1MSecs = 3,
-	// Intra-pulse duration 2
-	TagIndexIntraPulse2MSecs = 4,
-	// Intra-pulse uncertainty
-	TagIndexIntraPulseUncertainty = 5,
-	// Intra-pulse jitter
-	TagIndexIntraPulseJitter = 6,
-	// Max pulse value
-	TagIndexMaxPulse = 7
-};
-
-enum class PulseIndex
-{
-
-};
-
-enum class RSCIndex
-{
-	// The command that will be executed
-	RSCIndexCommand = 0,
-	// The radio system or which process the command will be executed on
-	RSCIndexWho = 1,
-	// If a Detector is specified for ‘who’, this value will correspond to
-	// that Detector’s ID. Otherwise, this value will be ‘0’.
-	RSCIndexDetectorID = 2
-};
-
-enum class RSSIndex
-{
-
-};
 
 class CommandComponent : public rclcpp::Node
 {
@@ -128,4 +66,4 @@ mavsdk::MavlinkPassthrough mavlink_passthrough_;
 
 }  // namespace uavrt_connection
 
-#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_H_
+#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_COMMAND_COMPONENT_HPP_

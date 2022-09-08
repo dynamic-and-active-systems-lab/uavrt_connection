@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License along with
 // this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// The format of the symbol name should be <PROJECT>_<PATH>_<FILE>_H_.
+// The format of the symbol name should be <PROJECT>_<PATH>_<FILE>_HPP_.
 // https://google.github.io/styleguide/cppguide.html#The__define_Guard
-#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_COMPONENT_H_
-#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_COMPONENT_H_
+#ifndef UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_COMPONENT_HPP_
+#define UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_COMPONENT_HPP_
 
 // ROS 2 header files
 #include "rclcpp/rclcpp.hpp"
@@ -173,4 +173,4 @@ mavsdk::Telemetry::Quaternion quaternion_;
 
 }  // namespace uavrt_connection
 
-#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_COMPONENT_H_
+#endif  // UAVRT_CONNECTION_INCLUDE_UAVRT_CONNECTION_TELEMETRY_COMPONENT_HPP_

@@ -18,6 +18,9 @@
 # https://ubuntu.com/blog/components-vs-plugins-in-ros-2
 # And then this ROS 2 documentation:
 # https://docs.ros.org/en/galactic/Concepts/About-Composition.html
+#
+# For more info on ament_cmake (ROS 2):
+# https://docs.ros.org/en/galactic/How-To-Guides/Ament-CMake-Documentation.html
 
 cmake_minimum_required(VERSION 3.8)
 project(uavrt_connection)

@@ -61,7 +61,7 @@ bool CommandComponent::CommandCallback(mavlink_message_t& message)
 
 		switch (debugFloatArray.array_id)
 		{
-		case static_cast<int>(CommandID::CommandIDTag):
+		case static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag):
 			HandleTagCommand(debugFloatArray);
 			break;
 		}
@@ -79,9 +79,9 @@ void CommandComponent::HandleAckCommand(uint32_t command_id, uint32_t result)
 	// Better way to do this other than using memset?
 	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
 
-	outgoing_debug_float_array.array_id = static_cast<int>(CommandID::CommandIDAck);
-	outgoing_debug_float_array.data[static_cast<int>(AckIndex::AckIndexCommand)] = command_id;
-	outgoing_debug_float_array.data[static_cast<int>(AckIndex::AckIndexResult)]  = result;
+	outgoing_debug_float_array.array_id = static_cast<int>(uavrt_interfaces::CommandID::CommandIDAck);
+	outgoing_debug_float_array.data[static_cast<int>(uavrt_interfaces::AckIndex::AckIndexCommand)] = command_id;
+	outgoing_debug_float_array.data[static_cast<int>(uavrt_interfaces::AckIndex::AckIndexResult)]  = result;
 
 	mavlink_msg_debug_float_array_encode(
 		mavlink_passthrough_.get_our_sysid(),
@@ -99,13 +99,13 @@ void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug
 	// https://github.com/dynamic-and-active-systems-lab/uavrt_interfaces/blob/main/msg/TagDef.msg
 	tag_info_ = uavrt_interfaces::msg::TagDef();
 
-	tag_info_.tag_id = debug_float_array.data[static_cast<int>(TagIndex::TagIndexID)];
-	tag_info_.frequency = debug_float_array.data[static_cast<int>(TagIndex::TagIndexFrequency)];
-	tag_info_.pulse_duration = debug_float_array.data[static_cast<int>(TagIndex::TagIndexDurationMSecs)];
-	tag_info_.interpulse_time_1 = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulse1MSecs)];
-	tag_info_.interpulse_time_2 = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulse2MSecs)];
-	tag_info_.interpulse_time_uncert = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulseUncertainty)];
-	tag_info_.interpulse_time_jitter = debug_float_array.data[static_cast<int>(TagIndex::TagIndexIntraPulseJitter)];
+	tag_info_.tag_id = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexID)];
+	tag_info_.frequency = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexFrequency)];
+	tag_info_.pulse_duration = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexDurationMSecs)];
+	tag_info_.interpulse_time_1 = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexIntraPulse1MSecs)];
+	tag_info_.interpulse_time_2 = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexIntraPulse2MSecs)];
+	tag_info_.interpulse_time_uncert = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexIntraPulseUncertainty)];
+	tag_info_.interpulse_time_jitter = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexIntraPulseJitter)];
 	// ?? _simulatorMaxPulse = debug_float_array.data[static_cast<int>(TagIndex::TagIndexMaxPulse)];
 
 	if (tag_info_.tag_id[0] == 0)
@@ -114,7 +114,7 @@ void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug
 		command_result  = 0;
 	}
 
-	HandleAckCommand(static_cast<int>(CommandID::CommandIDTag), command_result);
+	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag), command_result);
 
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully received tag info.");
