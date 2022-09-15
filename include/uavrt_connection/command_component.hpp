@@ -42,7 +42,7 @@ explicit CommandComponent(const rclcpp::NodeOptions &options,
 
 private:
 // ROS 2 related - Private functions
-void HandlePulseCommand(uavrt_interfaces::msg::PulsePose::SharedPtr detected_pulse_pose_message);
+void HandlePulseCommand(uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message);
 
 // MAVSDK related - Private functions
 bool CommandCallback(mavlink_message_t& message);
@@ -53,7 +53,7 @@ void HandleTagCommand(const mavlink_debug_float_array_t& debugFloatArray);
 // ROS 2 related - Private variables
 rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr tag_publisher_;
 
-rclcpp::Subscription<uavrt_interfaces::msg::PulsePose>::SharedPtr detected_pulse_pose_subscriber_;
+rclcpp::Subscription<uavrt_interfaces::msg::PulsePose>::SharedPtr pulse_pose_subscriber_;
 
 int queue_size_ = 10;
 

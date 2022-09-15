@@ -34,13 +34,13 @@ CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
 
 	// ROS 2 related - Publisher callbacks
 	tag_publisher_ = this->create_publisher<uavrt_interfaces::msg::TagDef>(
-		"/tag_info", queue_size_);
+		"tag_info", queue_size_);
 
 	// ROS 2 related - Subscriber callbacks
-	detected_pulse_pose_subscriber_ = this->create_subscription<uavrt_interfaces::msg::PulsePose>(
-		"/detected_pulse_pose", queue_size_, std::bind(&CommandComponent::HandlePulseCommand,
-		                                               this,
-		                                               std::placeholders::_1));
+	pulse_pose_subscriber_ = this->create_subscription<uavrt_interfaces::msg::PulsePose>(
+		"pulse_pose", queue_size_, std::bind(&CommandComponent::HandlePulseCommand,
+		                                     this,
+		                                     std::placeholders::_1));
 
 	// MAVSDK related
 	mavlink_passthrough_.intercept_incoming_messages_async(std::bind(&CommandComponent::CommandCallback,
@@ -123,10 +123,10 @@ void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug
 }
 
 void CommandComponent::HandlePulseCommand(
-	uavrt_interfaces::msg::PulsePose::SharedPtr detected_pulse_pose_message)
+	uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message)
 {
 	RCLCPP_INFO(this->get_logger(),
-	            "Successfully received detected pulse pose message.");
+	            "Successfully received pulse pose message.");
 }
 
 } // namespace uavrt_connection

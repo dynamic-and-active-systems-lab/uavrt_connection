@@ -80,7 +80,7 @@ private:
 // ROS 2 related - Private functions
 void AntennaPoseCallback();
 
-void DetectedPulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr detected_pulse_message);
+void PulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr pulse_message);
 
 // MAVSDK related - Private functions
 void ConnectionCallback(bool is_connected);
@@ -89,7 +89,7 @@ void PositionCallback(mavsdk::Telemetry::Position position);
 void QuaternionCallback(mavsdk::Telemetry::Quaternion quaternion);
 
 // Private helper functions
-InterpolationResults InterpolatePosition(double detected_pulse_average_time);
+InterpolationResults InterpolatePosition(double pulse_average_time);
 
 // ROS 2 related - Private variables
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr antenna_pose_publisher_;
@@ -121,11 +121,11 @@ geometry_msgs::msg::Pose antenna_pose_pose_;
 geometry_msgs::msg::Point antenna_pose_point_;
 geometry_msgs::msg::Quaternion antenna_pose_quaternion_;
 
-// For use in detected pulse callback
-geometry_msgs::msg::Pose detected_pulse_pose_;
-geometry_msgs::msg::Point detected_pulse_point_;
-geometry_msgs::msg::Quaternion detected_pulse_quaternion_;
-uavrt_interfaces::msg::PulsePose detected_pulse_pulse_pose_;
+// For use in pulse callback
+geometry_msgs::msg::Pose pulse_pose_;
+geometry_msgs::msg::Point pulse_point_;
+geometry_msgs::msg::Quaternion pulse_quaternion_;
+uavrt_interfaces::msg::PulsePose pulse_pulse_pose_;
 
 // MAVSDK related - Private variables
 mavsdk::Telemetry mavsdk_telemetry;

@@ -24,9 +24,8 @@
 #include <string>
 #include <cmath>
 
-//delete - only for debugging
-#include <iostream>     // std::cout, std::fixed
-#include <iomanip>      // std::setprecision
+// Delete - only for debugging
+#include <iostream>     // std::cout
 
 // Project header files
 #include "uavrt_connection/telemetry_component.hpp"
@@ -56,12 +55,12 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 
 	// ROS 2 related - Subscriber callbacks
 	pulse_subscriber_ = this->create_subscription<uavrt_interfaces::msg::Pulse>(
-		"/detected_pulse", queue_size_, std::bind(&TelemetryComponent::DetectedPulseCallback,
-		                                          this,
-		                                          std::placeholders::_1));
+		"pulse", queue_size_, std::bind(&TelemetryComponent::PulseCallback,
+		                                this,
+		                                std::placeholders::_1));
 
 	pulse_pose_publisher_ = this->create_publisher<uavrt_interfaces::msg::PulsePose>(
-		"/detected_pulse_pose", queue_size_);
+		"pulse_pose", queue_size_);
 
 	// MAVSDK related - Subsriber rate variables
 	mavsdk_telemetry.set_rate_position(postion_subsribe_rate_);
@@ -189,69 +188,69 @@ void TelemetryComponent::QuaternionCallback(mavsdk::Telemetry::Quaternion quater
 	this->quaternion_ = quaternion;
 }
 
-void TelemetryComponent::DetectedPulseCallback(
-	uavrt_interfaces::msg::Pulse::SharedPtr detected_pulse_message)
+void TelemetryComponent::PulseCallback(
+	uavrt_interfaces::msg::Pulse::SharedPtr pulse_message)
 {
 	RCLCPP_INFO(this->get_logger(),
-	            "Successfully received /detected_pulse.");
+	            "Successfully received pulse.");
 
 	if (connection_status_ == true)
 	{
 		InterpolationResults retrieved_results;
 
 		// https://docs.ros2.org/galactic/api/geometry_msgs/msg/Pose.html
-		detected_pulse_pose_ = geometry_msgs::msg::Pose();
+		pulse_pose_ = geometry_msgs::msg::Pose();
 		// https://docs.ros2.org/galactic/api/geometry_msgs/msg/Point.html
-		detected_pulse_point_ = geometry_msgs::msg::Point();
+		pulse_point_ = geometry_msgs::msg::Point();
 		// https://docs.ros2.org/galactic/api/geometry_msgs/msg/Quaternion.html
-		detected_pulse_quaternion_ = geometry_msgs::msg::Quaternion();
+		pulse_quaternion_ = geometry_msgs::msg::Quaternion();
 		// https://github.com/dynamic-and-active-systems-lab/uavrt_interfaces/blob/main/msg/Pulse.msg
-		detected_pulse_pulse_pose_ = uavrt_interfaces::msg::PulsePose();
+		pulse_pulse_pose_ = uavrt_interfaces::msg::PulsePose();
 
-		std::string detected_pulse_start_time =
-			std::to_string(detected_pulse_message->start_time.sec) + "." +
-			std::to_string(detected_pulse_message->start_time.nanosec);
-		std::string detected_pulse_end_time =
-			std::to_string(detected_pulse_message->end_time.sec) + "." +
-			std::to_string(detected_pulse_message->end_time.nanosec);
-		double detected_pulse_average_time =
-			(std::stod(detected_pulse_start_time) + std::stod(detected_pulse_end_time)) / 2;
+		std::string pulse_start_time =
+			std::to_string(pulse_message->start_time.sec) + "." +
+			std::to_string(pulse_message->start_time.nanosec);
+		std::string pulse_end_time =
+			std::to_string(pulse_message->end_time.sec) + "." +
+			std::to_string(pulse_message->end_time.nanosec);
+		double pulse_average_time =
+			(std::stod(pulse_start_time) + std::stod(pulse_end_time)) / 2;
 
 		// Interpolate/Slerp
-		retrieved_results = InterpolatePosition(detected_pulse_average_time);
+		retrieved_results = InterpolatePosition(pulse_average_time);
 
 		// Position
-		detected_pulse_point_.x = retrieved_results.interpolated_latitude;
-		detected_pulse_point_.y = retrieved_results.interpolated_logitude;
-		detected_pulse_point_.z = retrieved_results.interpolated_altitude;
+		pulse_point_.x = retrieved_results.interpolated_latitude;
+		pulse_point_.y = retrieved_results.interpolated_logitude;
+		pulse_point_.z = retrieved_results.interpolated_altitude;
 
 		// Quaternion
-		detected_pulse_quaternion_.w =
+		pulse_quaternion_.w =
 			retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::WIndex)];
-		detected_pulse_quaternion_.x =
+		pulse_quaternion_.x =
 			retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::XIndex)];
-		detected_pulse_quaternion_.y =
+		pulse_quaternion_.y =
 			retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::YIndex)];
-		detected_pulse_quaternion_.z =
+		pulse_quaternion_.z =
 			retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::ZIndex)];
 
 		// Create PulsePose object
-		detected_pulse_pose_.position = detected_pulse_point_;
-		detected_pulse_pose_.orientation = detected_pulse_quaternion_;
+		pulse_pose_.position = pulse_point_;
+		pulse_pose_.orientation = pulse_quaternion_;
 
-		detected_pulse_pulse_pose_.pulse = *detected_pulse_message;
-		detected_pulse_pulse_pose_.antenna_pose = detected_pulse_pose_;
+		pulse_pulse_pose_.pulse = *pulse_message;
+		pulse_pulse_pose_.antenna_pose = pulse_pose_;
 
 		// Use CommandComponent object to send to the ground
-		pulse_pose_publisher_->publish(detected_pulse_pulse_pose_);
+		pulse_pose_publisher_->publish(pulse_pulse_pose_);
 
-        RCLCPP_INFO(this->get_logger(),
-		            "Successfully published /detected_pulse_pose.");
+		RCLCPP_INFO(this->get_logger(),
+		            "Successfully published pulse_pose.");
 	}
 	else if (connection_status_ == false)
 	{
 		// Log to detector specific .txt file using id
-		std::cout << detected_pulse_message->detector_id << std::endl;
+		std::cout << pulse_message->detector_id << std::endl;
 	}
 }
 
@@ -260,26 +259,40 @@ void TelemetryComponent::DetectedPulseCallback(
 // std::begin/std::end vs .end() and .begin:
 // https://stackoverflow.com/questions/8452130/when-to-use-stdbegin-and-stdend-instead-of-container-specific-versions
 InterpolationResults TelemetryComponent::InterpolatePosition(
-	double detected_pulse_average_time)
+	double pulse_average_time)
 {
 	InterpolationResults generated_results;
+	uint16_t seven_hours_in_seconds = 25200;
 
-	// Iterator is of type std::vector<double>::iterator
+	// The time we are receiving from the detectors is recorded using GMT -7.
+	// We had seven hours to the average times in order to bring them to GMT 0.
+	// This is a bandaid. All uavrt packages should be using the same timezone.
+	pulse_average_time = pulse_average_time + seven_hours_in_seconds;
+
+	// To check contents of vectors:
+	// #include <iostream>     // std::fixed
+	// #include <iomanip>      // std::setprecision
+	// std::cout << std::fixed;
+	// for (auto it = antenna_pose_time_vector_.begin();
+	//      it != antenna_pose_time_vector_.end(); it++) {
+	//     std::cout << std::setprecision(9) << "antenna_pose_time_vector_: " << *it << std::endl;
+	// }
+
 	// This will return the first value that is less than the key
 	std::vector<double>::iterator upper_bound_iterator = std::upper_bound(
-		antenna_pose_time_vector_.end(),
 		antenna_pose_time_vector_.begin(),
-		detected_pulse_average_time,
+		antenna_pose_time_vector_.end(),
+		pulse_average_time,
 		std::greater<double>());
 
 	// This will return the first value that is greater than the key
 	std::vector<double>::iterator lower_bound_iterator = std::lower_bound(
-		antenna_pose_time_vector_.end(),
 		antenna_pose_time_vector_.begin(),
-		detected_pulse_average_time,
+		antenna_pose_time_vector_.end(),
+		pulse_average_time,
 		std::less<double>());
 
-	if (upper_bound_iterator == antenna_pose_time_vector_.end() ||
+	if (upper_bound_iterator == antenna_pose_time_vector_.end() &&
 	    lower_bound_iterator == antenna_pose_time_vector_.end())
 	{
 		RCLCPP_ERROR(this->get_logger(),
@@ -316,6 +329,9 @@ InterpolationResults TelemetryComponent::InterpolatePosition(
 		              std::find(antenna_pose_time_vector_.begin(),
 		                        antenna_pose_time_vector_.end(),
 		                        *lower_bound_iterator));
+
+	if (upper_bound_index > 0) {upper_bound_index -= 1;}
+	else if (lower_bound_index > 0) {lower_bound_index -= 1;}
 
 	generated_results.interpolated_latitude = std::lerp(
 		antenna_pose_position_array_[static_cast<int>(PositionArray::LatitudeIndex)].at(upper_bound_index),
