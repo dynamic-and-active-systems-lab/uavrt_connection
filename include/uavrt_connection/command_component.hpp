@@ -42,12 +42,15 @@ explicit CommandComponent(const rclcpp::NodeOptions &options,
 
 private:
 // ROS 2 related - Private functions
-void HandlePulseCommand(uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message);
 
 // MAVSDK related - Private functions
 bool CommandCallback(mavlink_message_t& message);
 
 void HandleAckCommand(uint32_t command_id, uint32_t result);
+
+// ROS 2 and MAVSDK related - Private functions
+// These functions are acting as the bridges between ROS 2/MAVSDK (Mavlink) messages
+void HandlePulseCommand(uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message);
 void HandleTagCommand(const mavlink_debug_float_array_t& debugFloatArray);
 
 // ROS 2 related - Private variables

@@ -48,14 +48,14 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 
 	// ROS 2 related - Publisher callbacks
 	antenna_pose_publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-		"/antenna_pose", queue_size_);
+		"antenna_pose", queue_size_);
 	antenna_pose_timer_ = this->create_wall_timer(
 		antenna_pose_period_ms_, std::bind(&TelemetryComponent::AntennaPoseCallback,
 		                                   this));
 
 	// ROS 2 related - Subscriber callbacks
 	pulse_subscriber_ = this->create_subscription<uavrt_interfaces::msg::Pulse>(
-		"pulse", queue_size_, std::bind(&TelemetryComponent::PulseCallback,
+		"/detected_pulse", queue_size_, std::bind(&TelemetryComponent::PulseCallback,
 		                                this,
 		                                std::placeholders::_1));
 

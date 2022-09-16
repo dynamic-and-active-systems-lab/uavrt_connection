@@ -35,8 +35,8 @@
 #include "mavsdk/plugins/telemetry/telemetry.h"
 
 // Boost header files
-#include <boost/qvm/quat.hpp>
-#include <boost/qvm/quat_operations.hpp>
+#include "boost/qvm/quat.hpp"
+#include "boost/qvm/quat_operations.hpp"
 
 // Project header files
 #include "uavrt_interfaces/msg/pulse.hpp"

@@ -19,6 +19,9 @@
 #include <memory>
 #include <string>
 
+// Delete - only for debugging
+#include <cmath>
+
 // Project header files
 #include "uavrt_connection/command_component.hpp"
 
@@ -125,8 +128,37 @@ void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug
 void CommandComponent::HandlePulseCommand(
 	uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message)
 {
+	mavlink_message_t message;
+	mavlink_debug_float_array_t outgoing_debug_float_array;
+
+	// Temp
+	float dft_real = pulse_pose_message->pulse.dft_real;
+	float dft_imaginary = pulse_pose_message->pulse.dft_imag;
+
+	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
+
+	// NOTE: We currently not using all of the parameters within the ROS 2
+	// pulse_pose messages. Certain parameters are also hardcoded for the time
+	// being.
+	outgoing_debug_float_array.array_id = static_cast<int>(uavrt_interfaces::CommandID::CommandIDPulse);
+	outgoing_debug_float_array.data[static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDetectionStatus)] = 2;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexStrength)] =
+		std::sqrt(pow(dft_real, 2) + pow(dft_imaginary, 2));
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexGroupIndex)] =
+		pulse_pose_message->pulse.group_ind;
+
+	mavlink_msg_debug_float_array_encode(
+		mavlink_passthrough_.get_our_sysid(),
+		mavlink_passthrough_.get_our_compid(),
+		&message,
+		&outgoing_debug_float_array);
+
+	mavlink_passthrough_.send_message(message);
+
 	RCLCPP_INFO(this->get_logger(),
-	            "Successfully received pulse pose message.");
+	            "Successfully sent pulse pose message to the ground.");
 }
 
 } // namespace uavrt_connection
