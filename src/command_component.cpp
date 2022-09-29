@@ -36,8 +36,14 @@ CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
 	RCLCPP_INFO(this->get_logger(), "Command component successfully created.");
 
 	// ROS 2 related - Publisher callbacks
-	tag_publisher_ = this->create_publisher<uavrt_interfaces::msg::TagDef>(
-		"tag_info", queue_size_);
+	start_subprocesses_publisher_ = this->create_publisher<uavrt_interfaces::msg::TagDef>(
+		"control_start_subprocess",
+		queue_size_);
+
+	// ROS 2 related - Publisher callbacks
+	stop_subprocesses_publisher_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
+		"control_stop_subprocess",
+		queue_size_);
 
 	// ROS 2 related - Subscriber callbacks
 	pulse_pose_subscriber_ = this->create_subscription<uavrt_interfaces::msg::PulsePose>(
@@ -64,6 +70,12 @@ bool CommandComponent::CommandCallback(mavlink_message_t& message)
 
 		switch (debugFloatArray.array_id)
 		{
+		case static_cast<int>(uavrt_interfaces::CommandID::CommandIDStart):
+			HandleStartCommand();
+			break;
+		case static_cast<int>(uavrt_interfaces::CommandID::CommandIDStop):
+			HandleStopCommand();
+			break;
 		case static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag):
 			HandleTagCommand(debugFloatArray);
 			break;
@@ -79,7 +91,6 @@ void CommandComponent::HandleAckCommand(uint32_t command_id, uint32_t result)
 	mavlink_message_t message;
 	mavlink_debug_float_array_t outgoing_debug_float_array;
 
-	// Better way to do this other than using memset?
 	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
 
 	outgoing_debug_float_array.array_id = static_cast<int>(uavrt_interfaces::CommandID::CommandIDAck);
@@ -93,6 +104,57 @@ void CommandComponent::HandleAckCommand(uint32_t command_id, uint32_t result)
 		&outgoing_debug_float_array);
 
 	mavlink_passthrough_.send_message(message);
+}
+
+void CommandComponent::HandleStartCommand()
+{
+	// This Command is currently not utilized. We send back a positive ack,
+	// else QGC will not allow for takeoff.
+
+	uint32_t command_result = 1;
+
+	RCLCPP_INFO(this->get_logger(),
+	            "Successfully received start command.");
+
+	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDStart),
+	                 command_result);
+}
+
+void CommandComponent::HandleStopCommand()
+{
+	uint32_t command_result = 1;
+
+	// https://docs.ros2.org/galactic/api/std_msgs/msg/Header.html
+	stop_command_header_ = std_msgs::msg::Header();
+	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/DiagnosticArray.html
+	stop_command_diagnostic_array_ = diagnostic_msgs::msg::DiagnosticArray();
+	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/DiagnosticStatus.html
+	stop_command_diagnostic_status_ = diagnostic_msgs::msg::DiagnosticStatus();
+	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/KeyValue.html
+	stop_command_key_value_ = diagnostic_msgs::msg::KeyValue();
+
+	// https://docs.ros2.org/galactic/api/builtin_interfaces/msg/Time.html
+	stop_command_header_.stamp = this->get_clock()->now();
+	stop_command_header_.frame_id = "stop_command_subprocesses";
+
+	stop_command_diagnostic_status_.level = '0';
+	stop_command_diagnostic_status_.name = "NA";
+	stop_command_diagnostic_status_.message = "stop";
+	stop_command_diagnostic_status_.hardware_id = "stop all";
+
+	stop_command_diagnostic_array_.status[
+		static_cast<int>(DiagnosticStatusIndices::DiagnosticStatus)] =
+		      stop_command_diagnostic_status_;
+
+	stop_command_diagnostic_array_.header = stop_command_header_;
+
+	RCLCPP_INFO(this->get_logger(),
+	            "Successfully received stop command.");
+
+	stop_subprocesses_publisher_->publish(stop_command_diagnostic_array_);
+
+	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag),
+	                 command_result);
 }
 
 void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug_float_array)
@@ -116,13 +178,16 @@ void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug
 		RCLCPP_ERROR(this->get_logger(), "Invalid tag id of 0.");
 		command_result  = 0;
 	}
+	else if (tag_info_.tag_id[0] != 0)
+	{
+		RCLCPP_INFO(this->get_logger(),
+		            "Successfully received tag info.");
 
-	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag), command_result);
+		start_subprocesses_publisher_->publish(tag_info_);
+	}
 
-	RCLCPP_INFO(this->get_logger(),
-	            "Successfully received tag info.");
-
-	tag_publisher_->publish(tag_info_);
+	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag),
+	                 command_result);
 }
 
 void CommandComponent::HandlePulseCommand(
@@ -130,10 +195,6 @@ void CommandComponent::HandlePulseCommand(
 {
 	mavlink_message_t message;
 	mavlink_debug_float_array_t outgoing_debug_float_array;
-
-	// Temp
-	float dft_real = pulse_pose_message->pulse.dft_real;
-	float dft_imaginary = pulse_pose_message->pulse.dft_imag;
 
 	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
 
@@ -144,7 +205,7 @@ void CommandComponent::HandlePulseCommand(
 	outgoing_debug_float_array.data[static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDetectionStatus)] = 2;
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexStrength)] =
-		std::sqrt(pow(dft_real, 2) + pow(dft_imaginary, 2));
+		pulse_pose_message->pulse.snr;
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexGroupIndex)] =
 		pulse_pose_message->pulse.group_ind;

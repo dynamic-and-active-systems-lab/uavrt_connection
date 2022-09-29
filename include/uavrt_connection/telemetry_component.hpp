@@ -133,8 +133,8 @@ mavsdk::Telemetry mavsdk_telemetry;
 bool connection_status_ = true;
 
 // Note: Value represent Hertz, 2 Hz = 0.5 seconds
-uint8_t postion_subsribe_rate_ = 2;
-uint8_t attitude_subsribe_rate_ = 2;
+uint8_t postion_subscribe_rate_ = 2;
+uint8_t attitude_subscribe_rate_ = 2;
 
 // Info on array of vectors: https://www.geeksforgeeks.org/array-of-vectors-in-c-stl/
 // Make a 3 by 1 array of vectors expecting to be filled with type double

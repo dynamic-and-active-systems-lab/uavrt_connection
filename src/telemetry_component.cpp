@@ -63,8 +63,8 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 		"pulse_pose", queue_size_);
 
 	// MAVSDK related - Subsriber rate variables
-	mavsdk_telemetry.set_rate_position(postion_subsribe_rate_);
-	mavsdk_telemetry.set_rate_attitude(attitude_subsribe_rate_);
+	mavsdk_telemetry.set_rate_position(postion_subscribe_rate_);
+	mavsdk_telemetry.set_rate_attitude(attitude_subscribe_rate_);
 
 	// MAVSDK related - Subscriber callbacks
 	system->subscribe_is_connected(std::bind(&TelemetryComponent::ConnectionCallback,
