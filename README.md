@@ -48,7 +48,7 @@ cd ~/uavrt_workspace/uavrt_source/
 You must be a member of the Dynamic and Active Systems Lab organization on Github. Authentication is currently required for the following command: 
 
 ```
-git clone https://github.com/dynamic-and-active-systems-lab/uavrt_conneciton/
+git clone https://github.com/dynamic-and-active-systems-lab/uavrt_connection/
 cd ~/uavrt_workspace/
 ```
 
