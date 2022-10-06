@@ -153,7 +153,7 @@ void CommandComponent::HandleStopCommand()
 
 	stop_subprocesses_publisher_->publish(stop_command_diagnostic_array_);
 
-	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag),
+	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDStop),
 	                 command_result);
 }
 

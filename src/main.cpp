@@ -129,7 +129,13 @@ int main(int argc, char *argv[])
 
 	int arg_val = std::stoi(argv[1]);
 
+	mavsdk::Mavsdk::Configuration configuration{
+		mavsdk::Mavsdk::Configuration::UsageType::GroundStation};
+	configuration.set_always_send_heartbeats(true);
+
 	mavsdk::Mavsdk mavsdk;
+	mavsdk.set_configuration(configuration);
+
 	mavsdk::ConnectionResult connection_result;
 
 	// Connection URL format should be:
