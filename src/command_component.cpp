@@ -21,6 +21,7 @@
 
 // Delete - only for debugging
 #include <cmath>
+#include <iostream>     // std::cout
 
 // Project header files
 #include "uavrt_connection/command_component.hpp"
@@ -141,10 +142,8 @@ void CommandComponent::HandleStopCommand()
 	stop_command_diagnostic_status_.name = "NA";
 	stop_command_diagnostic_status_.message = "stop";
 	stop_command_diagnostic_status_.hardware_id = "stop all";
-
-	stop_command_diagnostic_array_.status[
-		static_cast<int>(DiagnosticStatusIndices::DiagnosticStatus)] =
-		      stop_command_diagnostic_status_;
+    
+	stop_command_diagnostic_array_.status.push_back(stop_command_diagnostic_status_);
 
 	stop_command_diagnostic_array_.header = stop_command_header_;
 
@@ -198,17 +197,72 @@ void CommandComponent::HandlePulseCommand(
 
 	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
 
-	// NOTE: We currently not using all of the parameters within the ROS 2
-	// pulse_pose messages. Certain parameters are also hardcoded for the time
-	// being.
 	outgoing_debug_float_array.array_id = static_cast<int>(uavrt_interfaces::CommandID::CommandIDPulse);
-	outgoing_debug_float_array.data[static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDetectionStatus)] = 2;
+
+	// The first three entries (0-2) are kept here for the purpose of legacy
+	// support with QGC. They should be removed in the future to reduce redundancy.
 	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexStrength)] =
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDetectionStatusLEGACY)] = 0;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexStrengthLEGACY)] =
 		pulse_pose_message->pulse.snr;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexGroupIndexLEGACY)] = 0;
+
+	// Refer to uavrt_interfaces/include/uavrt_interfaces/qgc_enum_class_definitions.hpp
+	// for descriptions on each of the data values.
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexTagID)] =
+		std::stof(pulse_pose_message->pulse.detector_id);
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexFrequency)] =
+		pulse_pose_message->pulse.frequency;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexStartTime)] =
+		TimeToFloat(pulse_pose_message->pulse.start_time.sec,
+		            pulse_pose_message->pulse.start_time.nanosec);
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexEndTime)] =
+        TimeToFloat(pulse_pose_message->pulse.end_time.sec,
+		            pulse_pose_message->pulse.end_time.nanosec);
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPredictNextStartTime)] =
+        TimeToFloat(pulse_pose_message->pulse.predict_next_start.sec,
+                    pulse_pose_message->pulse.predict_next_start.nanosec);
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPredictNextEndTime)] =
+        TimeToFloat(pulse_pose_message->pulse.predict_next_end.sec,
+                    pulse_pose_message->pulse.predict_next_end.nanosec);
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexSNR)] =
+		pulse_pose_message->pulse.snr;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexSNRPerSample)] =
+		pulse_pose_message->pulse.snr_per_sample;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPSDSignalNoise)] =
+		pulse_pose_message->pulse.psd_sn;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPSDNoise)] =
+		pulse_pose_message->pulse.psd_n;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDFTReal)] =
+		pulse_pose_message->pulse.dft_real;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDFTImaginary)] =
+		pulse_pose_message->pulse.dft_imag;
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexGroupIndex)] =
 		pulse_pose_message->pulse.group_ind;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexGroupSNR)] =
+		pulse_pose_message->pulse.group_snr;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDetectionStatus)] =
+		pulse_pose_message->pulse.detection_status;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexConfirmedStatus)] =
+		pulse_pose_message->pulse.confirmed_status;
 
 	mavlink_msg_debug_float_array_encode(
 		mavlink_passthrough_.get_our_sysid(),
@@ -220,6 +274,20 @@ void CommandComponent::HandlePulseCommand(
 
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully sent pulse pose message to the ground.");
+}
+
+// Helper function for values that can not be inherently converted to floats
+// (like string and ROS 2 builtin_interfaces/Time). These values need to be
+// manually converted.
+float CommandComponent::TimeToFloat(int seconds, uint32_t nanoseconds)
+{
+	std::string uncoverted_time_value =
+		std::to_string(seconds) + "." +
+		std::to_string(nanoseconds);
+
+	float converted_time_value = std::stof(uncoverted_time_value);
+
+	return converted_time_value;
 }
 
 } // namespace uavrt_connection

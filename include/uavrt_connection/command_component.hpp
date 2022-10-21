@@ -38,12 +38,6 @@
 namespace uavrt_connection
 {
 
-enum class DiagnosticStatusIndices
-{
-	DiagnosticStatus = 1,
-    KeyValue = 2
-};
-
 class CommandComponent : public rclcpp::Node
 {
 public:
@@ -52,6 +46,7 @@ explicit CommandComponent(const rclcpp::NodeOptions &options,
 
 private:
 // ROS 2 related - Private functions
+float TimeToFloat(int seconds, uint32_t nanoseconds);
 
 // MAVSDK related - Private functions
 bool CommandCallback(mavlink_message_t& message);
