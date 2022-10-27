@@ -21,7 +21,8 @@
 
 // Delete - only for debugging
 #include <cmath>
-#include <iostream>     // std::cout
+#include <iostream>     // std::cout, std::fixed
+#include <iomanip>      // std::setprecision
 
 // Project header files
 #include "uavrt_connection/command_component.hpp"
@@ -142,7 +143,7 @@ void CommandComponent::HandleStopCommand()
 	stop_command_diagnostic_status_.name = "NA";
 	stop_command_diagnostic_status_.message = "stop";
 	stop_command_diagnostic_status_.hardware_id = "stop all";
-    
+
 	stop_command_diagnostic_array_.status.push_back(stop_command_diagnostic_status_);
 
 	stop_command_diagnostic_array_.header = stop_command_header_;
@@ -223,16 +224,16 @@ void CommandComponent::HandlePulseCommand(
 		            pulse_pose_message->pulse.start_time.nanosec);
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexEndTime)] =
-        TimeToFloat(pulse_pose_message->pulse.end_time.sec,
+		TimeToFloat(pulse_pose_message->pulse.end_time.sec,
 		            pulse_pose_message->pulse.end_time.nanosec);
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPredictNextStartTime)] =
-        TimeToFloat(pulse_pose_message->pulse.predict_next_start.sec,
-                    pulse_pose_message->pulse.predict_next_start.nanosec);
+		TimeToFloat(pulse_pose_message->pulse.predict_next_start.sec,
+		            pulse_pose_message->pulse.predict_next_start.nanosec);
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPredictNextEndTime)] =
-        TimeToFloat(pulse_pose_message->pulse.predict_next_end.sec,
-                    pulse_pose_message->pulse.predict_next_end.nanosec);
+		TimeToFloat(pulse_pose_message->pulse.predict_next_end.sec,
+		            pulse_pose_message->pulse.predict_next_end.nanosec);
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexSNR)] =
 		pulse_pose_message->pulse.snr;
@@ -263,6 +264,27 @@ void CommandComponent::HandlePulseCommand(
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexConfirmedStatus)] =
 		pulse_pose_message->pulse.confirmed_status;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPositionLongitude)] =
+		pulse_pose_message->antenna_pose.position.x;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPositionLatitude)] =
+		pulse_pose_message->antenna_pose.position.y;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPositionAltitude)] =
+		pulse_pose_message->antenna_pose.position.z;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexQuaternionX)] =
+		pulse_pose_message->antenna_pose.orientation.x;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexQuaternionY)] =
+		pulse_pose_message->antenna_pose.orientation.y;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexQuaternionZ)] =
+		pulse_pose_message->antenna_pose.orientation.z;
+	outgoing_debug_float_array.data[
+		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexQuaternionW)] =
+		pulse_pose_message->antenna_pose.orientation.w;
 
 	mavlink_msg_debug_float_array_encode(
 		mavlink_passthrough_.get_our_sysid(),
