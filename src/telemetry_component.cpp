@@ -55,7 +55,7 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 
 	// ROS 2 related - Subscriber callbacks
 	pulse_subscriber_ = this->create_subscription<uavrt_interfaces::msg::Pulse>(
-		"/detected_pulse", queue_size_, std::bind(&TelemetryComponent::PulseCallback,
+		"pulse", queue_size_, std::bind(&TelemetryComponent::PulseCallback,
 		                                this,
 		                                std::placeholders::_1));
 
