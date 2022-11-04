@@ -90,6 +90,7 @@ void QuaternionCallback(mavsdk::Telemetry::Quaternion quaternion);
 
 // Private helper functions
 InterpolationResults InterpolatePosition(double pulse_average_time);
+void LogPulsePose(uavrt_interfaces::msg::PulsePose pulse_pose_message);
 
 // ROS 2 related - Private variables
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr antenna_pose_publisher_;

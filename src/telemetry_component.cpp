@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <string>
 #include <cmath>
+#include <fstream> // Read and write from/to files.
 
 // Delete - only for debugging
 #include <iostream>     // std::cout
@@ -95,9 +96,9 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 void TelemetryComponent::ConnectionCallback(bool is_connected)
 {
 	connection_status_ = is_connected;
-	RCLCPP_INFO(this->get_logger(),
-	            "MAVSDK system connection has timed out! The UAV-RT system is "
-	            "no longer collecting data from the Pixhawk autopilot!");
+	RCLCPP_ERROR(this->get_logger(),
+	             "MAVSDK system connection has timed out! The UAV-RT system is "
+	             "no longer collecting data from the Pixhawk autopilot!");
 }
 
 void TelemetryComponent::AntennaPoseCallback()
@@ -246,11 +247,14 @@ void TelemetryComponent::PulseCallback(
 
 		RCLCPP_INFO(this->get_logger(),
 		            "Successfully published pulse_pose.");
+
+		LogPulsePose(pulse_pulse_pose_);
 	}
 	else if (connection_status_ == false)
 	{
-		// Log to detector specific .txt file using id
-		std::cout << pulse_message->detector_id << std::endl;
+		RCLCPP_ERROR(this->get_logger(),
+		             "Unable to retrieve telemetry data! This is most likely "
+		             "because the MAVSDK system connection has timed out.");
 	}
 }
 
@@ -396,6 +400,59 @@ InterpolationResults TelemetryComponent::InterpolatePosition(
 	generated_results.interpolated_quaternion = pulse_quaternion_slerp_result;
 
 	return generated_results;
+}
+
+void TelemetryComponent::LogPulsePose(uavrt_interfaces::msg::PulsePose
+                                      pulse_pose_message)
+{
+	// Replace with dynamic pulse_pose_file_location (use info from Pulse msg)
+	std::string pulse_pose_log_file_location =
+		"/home/dasl/uavrt_workspace/uavrt_source/log/detector_log/config_example/pulse_pose_output";
+	std::ofstream pulse_pose_log_file;
+
+	// Open for output in append mode (create a new file only if the file does not exist)
+	// https://cplusplus.com/doc/tutorial/files/
+    pulse_pose_log_file.open(pulse_pose_log_file_location,
+	                             std::ios::app);
+	if (pulse_pose_log_file.is_open() == true)
+	{
+		pulse_pose_log_file << pulse_pose_message.pulse.detector_id << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.frequency << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.start_time.sec << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.start_time.nanosec << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.end_time.sec << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.end_time.nanosec << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.predict_next_start.sec << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.predict_next_start.nanosec << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.predict_next_end.sec << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.predict_next_end.nanosec << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.snr << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.snr_per_sample << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.psd_sn << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.psd_n << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.dft_real << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.dft_imag << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.group_ind << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.group_snr << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.detection_status << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.confirmed_status << ", ";
+
+		pulse_pose_log_file << pulse_pose_message.antenna_pose.position.x << ", ";
+		pulse_pose_log_file << pulse_pose_message.antenna_pose.position.y << ", ";
+		pulse_pose_log_file << pulse_pose_message.antenna_pose.position.z << ", ";
+
+		pulse_pose_log_file << pulse_pose_message.antenna_pose.orientation.x << ", ";
+		pulse_pose_log_file << pulse_pose_message.antenna_pose.orientation.y << ", ";
+		pulse_pose_log_file << pulse_pose_message.antenna_pose.orientation.z << ", ";
+		pulse_pose_log_file << pulse_pose_message.antenna_pose.orientation.w << "\n";
+	}
+	else if(pulse_pose_log_file.is_open() == false)
+	{
+		RCLCPP_ERROR(this->get_logger(),
+		             "Unable to open/append to pulse pose log file!");
+	}
+
+	pulse_pose_log_file.close();
 }
 
 } // namespace uavrt_connection
