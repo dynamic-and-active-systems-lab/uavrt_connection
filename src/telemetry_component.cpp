@@ -412,11 +412,11 @@ void TelemetryComponent::LogPulsePose(uavrt_interfaces::msg::PulsePose
 
 	// Open for output in append mode (create a new file only if the file does not exist)
 	// https://cplusplus.com/doc/tutorial/files/
-    pulse_pose_log_file.open(pulse_pose_log_file_location,
-	                             std::ios::app);
+	pulse_pose_log_file.open(pulse_pose_log_file_location,
+	                         std::ios::app);
 	if (pulse_pose_log_file.is_open() == true)
 	{
-		pulse_pose_log_file << pulse_pose_message.pulse.detector_id << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.tag_id << ", ";
 		pulse_pose_log_file << pulse_pose_message.pulse.frequency << ", ";
 		pulse_pose_log_file << pulse_pose_message.pulse.start_time.sec << ", ";
 		pulse_pose_log_file << pulse_pose_message.pulse.start_time.nanosec << ", ";

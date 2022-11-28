@@ -214,7 +214,7 @@ void CommandComponent::HandlePulseCommand(
 	// for descriptions on each of the data values.
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexTagID)] =
-		std::stof(pulse_pose_message->pulse.detector_id);
+		std::stof(pulse_pose_message->pulse.tag_id);
 	outgoing_debug_float_array.data[
 		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexFrequency)] =
 		pulse_pose_message->pulse.frequency;
