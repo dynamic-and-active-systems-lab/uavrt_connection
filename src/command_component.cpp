@@ -37,6 +37,9 @@ CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
 {
 	RCLCPP_INFO(this->get_logger(), "Command component successfully created.");
 
+	// Check that TunnelProtocol hasn't exceed limits
+	static_assert(TunnelProtocolValidateSizes, "TunnelProtocolValidateSizes failed");
+
 	// ROS 2 related - Publisher callbacks
 	start_subprocesses_publisher_ = this->create_publisher<uavrt_interfaces::msg::TagDef>(
 		"control_start_subprocess",
@@ -54,77 +57,79 @@ CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
 		                                     std::placeholders::_1));
 
 	// MAVSDK related
-	mavlink_passthrough_.intercept_incoming_messages_async(std::bind(&CommandComponent::CommandCallback,
-	                                                                 this,
-	                                                                 std::placeholders::_1));
+	mavlink_passthrough_.subscribe_message_async(MAVLINK_MSG_ID_TUNNEL,
+	                                             std::bind(&CommandComponent::CommandCallback,
+	                                                       this,
+	                                                       std::placeholders::_1));
 }
 
-// Static_cast is required for enum classes. Enum classes are safer than
-// enum since it's not an implicit conversion to a data type like int.
-// https://rules.sonarsource.com/cpp/RSPEC-3642
-bool CommandComponent::CommandCallback(mavlink_message_t& message)
+void CommandComponent::CommandCallback(const mavlink_message_t& message)
 {
-	if (message.msgid == MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY)
+	mavlink_tunnel_t tunnel;
+
+	mavlink_msg_tunnel_decode(&message, &tunnel);
+
+	TunnelProtocol::HeaderInfo_t header_info;
+
+    RCLCPP_ERROR(this->get_logger(),
+                 "Test");
+
+	if (tunnel.payload_length < sizeof(header_info))
 	{
-		mavlink_debug_float_array_t debugFloatArray;
-
-		mavlink_msg_debug_float_array_decode(&message, &debugFloatArray);
-
-		switch (debugFloatArray.array_id)
-		{
-		case static_cast<int>(uavrt_interfaces::CommandID::CommandIDStart):
-			HandleStartCommand();
-			break;
-		case static_cast<int>(uavrt_interfaces::CommandID::CommandIDStop):
-			HandleStopCommand();
-			break;
-		case static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag):
-			HandleTagCommand(debugFloatArray);
-			break;
-		}
+		RCLCPP_ERROR(this->get_logger(),
+		             "Tunnel message payload too small.");
+		return;
 	}
 
-	// To drop a message, return 'false' from the callback.
-	return true;
+	memcpy(&header_info, tunnel.payload, sizeof(header_info));
+
+	switch (header_info.command)
+	{
+	case COMMAND_ID_START_DETECTION:
+		HandleStartDetectionCommand();
+		break;
+	case COMMAND_ID_STOP_DETECTION:
+		HandleStopDetectionCommand();
+		break;
+	case COMMAND_ID_TAG:
+		HandleTagCommand(tunnel);
+		break;
+	case COMMAND_ID_START_TAGS:
+		HandleStartTagCommand();
+		break;
+	case COMMAND_ID_END_TAGS:
+		HandleEndTagCommand();
+		break;
+	}
 }
 
 void CommandComponent::HandleAckCommand(uint32_t command_id, uint32_t result)
 {
-	mavlink_message_t message;
-	mavlink_debug_float_array_t outgoing_debug_float_array;
+	TunnelProtocol::AckInfo_t ack_info;
 
-	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
+	RCLCPP_INFO(this->get_logger(),
+	            "Sending back ack message for command: %d", command_id);
 
-	outgoing_debug_float_array.array_id = static_cast<int>(uavrt_interfaces::CommandID::CommandIDAck);
-	outgoing_debug_float_array.data[static_cast<int>(uavrt_interfaces::AckIndex::AckIndexCommand)] = command_id;
-	outgoing_debug_float_array.data[static_cast<int>(uavrt_interfaces::AckIndex::AckIndexResult)]  = result;
+	ack_info.header.command  = COMMAND_ID_ACK;
+	ack_info.command         = command_id;
+	ack_info.result          = result;
 
-	mavlink_msg_debug_float_array_encode(
-		mavlink_passthrough_.get_our_sysid(),
-		mavlink_passthrough_.get_our_compid(),
-		&message,
-		&outgoing_debug_float_array);
-
-	mavlink_passthrough_.send_message(message);
+	SendTunnelMessage(&ack_info, sizeof(ack_info));
 }
 
-void CommandComponent::HandleStartCommand()
+void CommandComponent::HandleStartDetectionCommand()
 {
-	// This Command is currently not utilized. We send back a positive ack,
-	// else QGC will not allow for takeoff.
-
-	uint32_t command_result = 1;
+	uint32_t command_result = COMMAND_RESULT_SUCCESS;
 
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully received start command.");
 
-	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDStart),
-	                 command_result);
+	HandleAckCommand(COMMAND_ID_START_DETECTION, command_result);
 }
 
-void CommandComponent::HandleStopCommand()
+void CommandComponent::HandleStopDetectionCommand()
 {
-	uint32_t command_result = 1;
+	uint32_t command_result = COMMAND_RESULT_SUCCESS;
 
 	// https://docs.ros2.org/galactic/api/std_msgs/msg/Header.html
 	stop_command_header_ = std_msgs::msg::Header();
@@ -153,30 +158,31 @@ void CommandComponent::HandleStopCommand()
 
 	stop_subprocesses_publisher_->publish(stop_command_diagnostic_array_);
 
-	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDStop),
-	                 command_result);
+	HandleAckCommand(COMMAND_ID_STOP_DETECTION, command_result);
 }
 
-void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug_float_array)
+void CommandComponent::HandleTagCommand(const mavlink_tunnel_t& tunnel)
 {
-	uint32_t command_result = 1;
+	TunnelProtocol::TagInfo_t new_tag_info;
+	uint32_t command_result = COMMAND_RESULT_SUCCESS;
+
+	memcpy(&new_tag_info, tunnel.payload, sizeof(new_tag_info));
 
 	// https://github.com/dynamic-and-active-systems-lab/uavrt_interfaces/blob/main/msg/TagDef.msg
 	tag_info_ = uavrt_interfaces::msg::TagDef();
 
-	tag_info_.tag_id = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexID)];
-	tag_info_.frequency = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexFrequency)];
-	tag_info_.pulse_duration = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexDurationMSecs)];
-	tag_info_.interpulse_time_1 = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexIntraPulse1MSecs)];
-	tag_info_.interpulse_time_2 = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexIntraPulse2MSecs)];
-	tag_info_.interpulse_time_uncert = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexIntraPulseUncertainty)];
-	tag_info_.interpulse_time_jitter = debug_float_array.data[static_cast<int>(uavrt_interfaces::TagIndex::TagIndexIntraPulseJitter)];
-	// ?? _simulatorMaxPulse = debug_float_array.data[static_cast<int>(TagIndex::TagIndexMaxPulse)];
+	tag_info_.tag_id = new_tag_info.id;
+	tag_info_.frequency = new_tag_info.frequency_hz;
+	tag_info_.pulse_duration = new_tag_info.pulse_width_msecs;
+	tag_info_.interpulse_time_1 = new_tag_info.intra_pulse1_msecs;
+	tag_info_.interpulse_time_2 = new_tag_info.intra_pulse2_msecs;
+	tag_info_.interpulse_time_uncert = new_tag_info.intra_pulse_uncertainty_msecs;
+	tag_info_.interpulse_time_jitter = new_tag_info.intra_pulse_jitter_msecs;
 
 	if (tag_info_.tag_id[0] == 0)
 	{
 		RCLCPP_ERROR(this->get_logger(), "Invalid tag id of 0.");
-		command_result  = 0;
+		command_result  = COMMAND_RESULT_FAILURE;
 	}
 	else if (tag_info_.tag_id[0] != 0)
 	{
@@ -186,116 +192,118 @@ void CommandComponent::HandleTagCommand(const mavlink_debug_float_array_t& debug
 		start_subprocesses_publisher_->publish(tag_info_);
 	}
 
-	HandleAckCommand(static_cast<int>(uavrt_interfaces::CommandID::CommandIDTag),
-	                 command_result);
+	HandleAckCommand(COMMAND_ID_TAG, command_result);
 }
 
 void CommandComponent::HandlePulseCommand(
 	uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message)
 {
-	mavlink_message_t message;
-	mavlink_debug_float_array_t outgoing_debug_float_array;
-
-	memset(&outgoing_debug_float_array, 0, sizeof(outgoing_debug_float_array));
-
-	outgoing_debug_float_array.array_id = static_cast<int>(uavrt_interfaces::CommandID::CommandIDPulse);
-
-	// The first three entries (0-2) are kept here for the purpose of legacy
-	// support with QGC. They should be removed in the future to reduce redundancy.
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDetectionStatusLEGACY)] = 0;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexStrengthLEGACY)] =
-		pulse_pose_message->pulse.snr;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexGroupIndexLEGACY)] = 0;
+	TunnelProtocol::PulseInfo_t pulse_info;
 
 	// Refer to uavrt_interfaces/include/uavrt_interfaces/qgc_enum_class_definitions.hpp
 	// for descriptions on each of the data values.
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexTagID)] =
-		std::stof(pulse_pose_message->pulse.tag_id);
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexFrequency)] =
-		pulse_pose_message->pulse.frequency;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexStartTime)] =
-		TimeToFloat(pulse_pose_message->pulse.start_time.sec,
-		            pulse_pose_message->pulse.start_time.nanosec);
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexEndTime)] =
-		TimeToFloat(pulse_pose_message->pulse.end_time.sec,
-		            pulse_pose_message->pulse.end_time.nanosec);
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPredictNextStartTime)] =
-		TimeToFloat(pulse_pose_message->pulse.predict_next_start.sec,
-		            pulse_pose_message->pulse.predict_next_start.nanosec);
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPredictNextEndTime)] =
-		TimeToFloat(pulse_pose_message->pulse.predict_next_end.sec,
-		            pulse_pose_message->pulse.predict_next_end.nanosec);
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexSNR)] =
-		pulse_pose_message->pulse.snr;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexSNRPerSample)] =
-		pulse_pose_message->pulse.snr_per_sample;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPSDSignalNoise)] =
-		pulse_pose_message->pulse.psd_sn;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPSDNoise)] =
-		pulse_pose_message->pulse.psd_n;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDFTReal)] =
-		pulse_pose_message->pulse.dft_real;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDFTImaginary)] =
-		pulse_pose_message->pulse.dft_imag;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexGroupIndex)] =
-		pulse_pose_message->pulse.group_ind;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexGroupSNR)] =
-		pulse_pose_message->pulse.group_snr;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexDetectionStatus)] =
-		pulse_pose_message->pulse.detection_status;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexConfirmedStatus)] =
-		pulse_pose_message->pulse.confirmed_status;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPositionLongitude)] =
-		pulse_pose_message->antenna_pose.position.x;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPositionLatitude)] =
-		pulse_pose_message->antenna_pose.position.y;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexPositionAltitude)] =
-		pulse_pose_message->antenna_pose.position.z;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexQuaternionX)] =
-		pulse_pose_message->antenna_pose.orientation.x;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexQuaternionY)] =
-		pulse_pose_message->antenna_pose.orientation.y;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexQuaternionZ)] =
-		pulse_pose_message->antenna_pose.orientation.z;
-	outgoing_debug_float_array.data[
-		static_cast<int>(uavrt_interfaces::PulseIndex::PulseIndexQuaternionW)] =
-		pulse_pose_message->antenna_pose.orientation.w;
+	pulse_info.header.command = COMMAND_ID_PULSE;
+	pulse_info.tag_id = std::stof(pulse_pose_message->pulse.tag_id);
+	pulse_info.frequency_hz = pulse_pose_message->pulse.frequency;
+	pulse_info.start_time_seconds = TimeToFloat(pulse_pose_message->pulse.start_time.sec,
+	                                            pulse_pose_message->pulse.start_time.nanosec);
+	pulse_info.end_time_seconds = TimeToFloat(pulse_pose_message->pulse.end_time.sec,
+	                                          pulse_pose_message->pulse.end_time.nanosec);
+	pulse_info.predict_next_start_seconds = TimeToFloat(pulse_pose_message->pulse.predict_next_start.sec,
+	                                                    pulse_pose_message->pulse.predict_next_start.nanosec);
+	pulse_info.predict_next_end_seconds = TimeToFloat(pulse_pose_message->pulse.predict_next_end.sec,
+	                                                  pulse_pose_message->pulse.predict_next_end.nanosec);
+	pulse_info.snr = pulse_pose_message->pulse.snr;
+    pulse_info.snr_per_sample = pulse_pose_message->pulse.snr_per_sample;
+    pulse_info.psd_sn = pulse_pose_message->pulse.psd_sn;
+    pulse_info.psd_n = pulse_pose_message->pulse.psd_n;
+    pulse_info.dft_real = pulse_pose_message->pulse.dft_real;
+    pulse_info.dft_imag = pulse_pose_message->pulse.dft_imag;
+    pulse_info.group_ind = pulse_pose_message->pulse.group_ind;
+	pulse_info.group_snr = pulse_pose_message->pulse.group_snr;
+    pulse_info.detection_status = pulse_pose_message->pulse.detection_status;
+    pulse_info.confirmed_status = pulse_pose_message->pulse.confirmed_status;
 
-	mavlink_msg_debug_float_array_encode(
-		mavlink_passthrough_.get_our_sysid(),
-		mavlink_passthrough_.get_our_compid(),
-		&message,
-		&outgoing_debug_float_array);
+/*
+	pulse_info.position_x = pulse_pose_message->antenna_pose.position.x;
+    pulse_info.position_y = pulse_pose_message->antenna_pose.position.y;
+    pulse_info.position_z = pulse_pose_message->antenna_pose.position.z;
 
-	mavlink_passthrough_.send_message(message);
+    pulse_info.orientation_x = pulse_pose_message->antenna_pose.orientation.x;
+    pulse_info.orientation_y = pulse_pose_message->antenna_pose.orientation.y;
+    pulse_info.orientation_z = pulse_pose_message->antenna_pose.orientation.z;
+    pulse_info.orientation_w = pulse_pose_message->antenna_pose.orientation.w;
+*/
+
+	SendTunnelMessage(&pulse_info, sizeof(pulse_info));
 
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully sent pulse pose message to the ground.");
+}
+
+void CommandComponent::HandleStartTagCommand()
+{
+	RCLCPP_INFO(this->get_logger(),
+	            "Successfully received start tag command.");
+
+	HandleAckCommand(COMMAND_ID_START_TAGS, COMMAND_RESULT_SUCCESS);
+}
+
+void CommandComponent::HandleEndTagCommand()
+{
+	RCLCPP_INFO(this->get_logger(),
+	            "Successfully received end tag command.");
+
+	HandleAckCommand(COMMAND_ID_END_TAGS, COMMAND_RESULT_SUCCESS);
+}
+
+void CommandComponent::SendTunnelMessage(void* tunnel_payload,
+                                         size_t tunnel_payload_size)
+{
+	mavlink_message_t message;
+	mavlink_tunnel_t tunnel;
+
+	memset(&tunnel, 0, sizeof(tunnel));
+
+	tunnel.target_system    = mavlink_passthrough_.get_target_sysid();
+	tunnel.target_component = mavlink_passthrough_.get_target_compid();
+	tunnel.payload_type     = MAV_TUNNEL_PAYLOAD_TYPE_UNKNOWN;
+	tunnel.payload_length   = tunnel_payload_size;
+
+	memcpy(tunnel.payload, tunnel_payload, tunnel_payload_size);
+
+	mavlink_msg_tunnel_encode(
+		mavlink_passthrough_.get_our_sysid(),
+		mavlink_passthrough_.get_our_compid(),
+		&message,
+		&tunnel);
+
+	mavlink_passthrough_.send_message(message);
+}
+
+// TODO: Need to change this function to be a ROS 2 subsriber.
+// Subsribe to status_messages, grab the text from the message, and then
+// send down along with other ROS 2 diagnostic_msg info.
+void CommandComponent::SendStatusText(const char* text)
+{
+	/*
+	    mavlink_message_t message;
+	    mavlink_statustext_t statustext;
+
+	    memset(&statustext, 0, sizeof(statustext));
+
+	    statustext.severity = MAV_SEVERITY_INFO;
+
+	    strncpy(statustext.text, text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
+
+	    mavlink_msg_statustext_encode(
+	            mavlink_passthrough_.get_our_sysid(),
+	            mavlink_passthrough_.get_our_compid(),
+	            &message,
+	            &statustext);
+
+	    mavlink_passthrough_.send_message(message);
+	 */
 }
 
 // Helper function for values that can not be inherently converted to floats
@@ -311,5 +319,4 @@ float CommandComponent::TimeToFloat(int seconds, uint32_t nanoseconds)
 
 	return converted_time_value;
 }
-
 } // namespace uavrt_connection

@@ -129,12 +129,12 @@ int main(int argc, char *argv[])
 
 	int arg_val = std::stoi(argv[1]);
 
-	mavsdk::Mavsdk::Configuration configuration{
-		mavsdk::Mavsdk::Configuration::UsageType::GroundStation};
-	configuration.set_always_send_heartbeats(true);
+	// mavsdk::Mavsdk::Configuration configuration{
+	// 	mavsdk::Mavsdk::Configuration::UsageType::GroundStation};
+	// configuration.set_always_send_heartbeats(true);
 
 	mavsdk::Mavsdk mavsdk;
-	mavsdk.set_configuration(configuration);
+	mavsdk.set_configuration(Mavsdk::Configuration(1, MAV_COMP_ID_ONBOARD_COMPUTER, true));
 
 	mavsdk::ConnectionResult connection_result;
 
@@ -163,12 +163,40 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	std::shared_ptr<mavsdk::System> system = GetSystem(mavsdk);
+	// std::shared_ptr<mavsdk::System> system = GetSystem(mavsdk);
 
-	if (!system)
-	{
-		RCLCPP_ERROR(rclcpp::get_logger("Main"), "System object is not valid.");
-		return 1;
+	// if (!system)
+	// {
+	// 	RCLCPP_ERROR(rclcpp::get_logger("Main"), "System object is not valid.");
+	// 	return 1;
+	// }
+
+	bool foundAutopilot = false;
+	bool foundQGC       = false;
+
+	std::shared_ptr<mavsdk::System> autopilotSystem;
+	std::shared_ptr<mavsdk::System> qgcSystem;
+
+	while (!foundAutopilot || !foundQGC) {
+		std::vector< std::shared_ptr< mavsdk::System > > systems = mavsdk.systems();
+		for (size_t i=0; i<systems.size(); i++) {
+			std::shared_ptr< mavsdk::System > system = systems[i];
+			std::vector< uint8_t > compIds = system->component_ids();
+			for (size_t i=0; i < compIds.size(); i++) {
+				auto compId = compIds[i];
+				if (!foundAutopilot && compId == MAV_COMP_ID_AUTOPILOT1) {
+					std::cout << "Discovered Autopilot" << std::endl;
+					autopilotSystem = system;
+					foundAutopilot  = true;
+				} else if (!foundQGC && compId == MAV_COMP_ID_MISSIONPLANNER && system->get_system_id() == 255) {
+					std::cout << "Discovered QGC" << std::endl;
+					qgcSystem = system;
+					foundQGC = true;
+				}
+			}
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	}
 
 	// Initialize any global resources needed by the middleware and the client library.
@@ -190,9 +218,9 @@ int main(int argc, char *argv[])
 	// Add some nodes to the executor which provide work for the executor during its "spin" function.
 	// An example of available work is executing a subscription callback, or a timer callback.
 	std::shared_ptr<uavrt_connection::TelemetryComponent> telemetry_component =
-		std::make_shared<uavrt_connection::TelemetryComponent>(options, system);
+		std::make_shared<uavrt_connection::TelemetryComponent>(options, qgcSystem);
 	std::shared_ptr<uavrt_connection::CommandComponent> command_component =
-		std::make_shared<uavrt_connection::CommandComponent>(options, system);
+		std::make_shared<uavrt_connection::CommandComponent>(options, qgcSystem);
 
 	// One thread of a Static Single-Threaded Executor is used to serve two nodes together.
 	executor.add_node(telemetry_component);

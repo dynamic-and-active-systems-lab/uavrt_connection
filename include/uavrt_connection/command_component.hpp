@@ -34,6 +34,7 @@
 #include "uavrt_interfaces/msg/pulse_pose.hpp"
 #include "uavrt_interfaces/msg/tag_def.hpp"
 #include "uavrt_interfaces/qgc_enum_class_definitions.hpp"
+#include "uavrt_interfaces/TunnelProtocol.h"
 
 namespace uavrt_connection
 {
@@ -49,16 +50,21 @@ private:
 float TimeToFloat(int seconds, uint32_t nanoseconds);
 
 // MAVSDK related - Private functions
-bool CommandCallback(mavlink_message_t& message);
+void CommandCallback(const mavlink_message_t& message);
 
 void HandleAckCommand(uint32_t command_id, uint32_t result);
 
+void SendTunnelMessage(void* tunnel_payload, size_t tunnel_payload_size);
+void SendStatusText(const char* text);
+
 // ROS 2 and MAVSDK related - Private functions
 // These functions are acting as the bridges between ROS 2/MAVSDK (Mavlink) messages
-void HandleStartCommand();
-void HandleStopCommand();
+void HandleStartDetectionCommand();
+void HandleStopDetectionCommand();
 void HandlePulseCommand(uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message);
-void HandleTagCommand(const mavlink_debug_float_array_t& debugFloatArray);
+void HandleTagCommand(const mavlink_tunnel_t& tunnel_message);
+void HandleStartTagCommand();
+void HandleEndTagCommand();
 
 // ROS 2 related - Private variables
 rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr start_subprocesses_publisher_;
