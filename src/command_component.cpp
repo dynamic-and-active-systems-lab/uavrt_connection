@@ -71,9 +71,6 @@ void CommandComponent::CommandCallback(const mavlink_message_t& message)
 
 	TunnelProtocol::HeaderInfo_t header_info;
 
-    RCLCPP_ERROR(this->get_logger(),
-                 "Test");
-
 	if (tunnel.payload_length < sizeof(header_info))
 	{
 		RCLCPP_ERROR(this->get_logger(),

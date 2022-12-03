@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	// configuration.set_always_send_heartbeats(true);
 
 	mavsdk::Mavsdk mavsdk;
-	mavsdk.set_configuration(Mavsdk::Configuration(1, MAV_COMP_ID_ONBOARD_COMPUTER, true));
+	mavsdk.set_configuration(mavsdk::Mavsdk::Configuration(1, MAV_COMP_ID_ONBOARD_COMPUTER, true));
 
 	mavsdk::ConnectionResult connection_result;
 
