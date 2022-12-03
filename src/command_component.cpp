@@ -211,18 +211,18 @@ void CommandComponent::HandlePulseCommand(
 	pulse_info.predict_next_end_seconds = TimeToFloat(pulse_pose_message->pulse.predict_next_end.sec,
 	                                                  pulse_pose_message->pulse.predict_next_end.nanosec);
 	pulse_info.snr = pulse_pose_message->pulse.snr;
-    pulse_info.snr_per_sample = pulse_pose_message->pulse.snr_per_sample;
-    pulse_info.psd_sn = pulse_pose_message->pulse.psd_sn;
-    pulse_info.psd_n = pulse_pose_message->pulse.psd_n;
-    pulse_info.dft_real = pulse_pose_message->pulse.dft_real;
-    pulse_info.dft_imag = pulse_pose_message->pulse.dft_imag;
-    pulse_info.group_ind = pulse_pose_message->pulse.group_ind;
+	pulse_info.snr_per_sample = pulse_pose_message->pulse.snr_per_sample;
+	pulse_info.psd_sn = pulse_pose_message->pulse.psd_sn;
+	pulse_info.psd_n = pulse_pose_message->pulse.psd_n;
+	pulse_info.dft_real = pulse_pose_message->pulse.dft_real;
+	pulse_info.dft_imag = pulse_pose_message->pulse.dft_imag;
+	pulse_info.group_ind = pulse_pose_message->pulse.group_ind;
 	pulse_info.group_snr = pulse_pose_message->pulse.group_snr;
-    pulse_info.detection_status = pulse_pose_message->pulse.detection_status;
-    pulse_info.confirmed_status = pulse_pose_message->pulse.confirmed_status;
+	pulse_info.detection_status = pulse_pose_message->pulse.detection_status;
+	pulse_info.confirmed_status = pulse_pose_message->pulse.confirmed_status;
 
 /*
-	pulse_info.position_x = pulse_pose_message->antenna_pose.position.x;
+        pulse_info.position_x = pulse_pose_message->antenna_pose.position.x;
     pulse_info.position_y = pulse_pose_message->antenna_pose.position.y;
     pulse_info.position_z = pulse_pose_message->antenna_pose.position.z;
 
@@ -230,7 +230,7 @@ void CommandComponent::HandlePulseCommand(
     pulse_info.orientation_y = pulse_pose_message->antenna_pose.orientation.y;
     pulse_info.orientation_z = pulse_pose_message->antenna_pose.orientation.z;
     pulse_info.orientation_w = pulse_pose_message->antenna_pose.orientation.w;
-*/
+ */
 
 	SendTunnelMessage(&pulse_info, sizeof(pulse_info));
 
