@@ -33,7 +33,6 @@
 #include "uavrt_interfaces/msg/pulse.hpp"
 #include "uavrt_interfaces/msg/pulse_pose.hpp"
 #include "uavrt_interfaces/msg/tag_def.hpp"
-#include "uavrt_interfaces/qgc_enum_class_definitions.hpp"
 #include "uavrt_interfaces/TunnelProtocol.h"
 
 namespace uavrt_connection
