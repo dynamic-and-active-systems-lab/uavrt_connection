@@ -407,7 +407,7 @@ void TelemetryComponent::LogPulsePose(uavrt_interfaces::msg::PulsePose
 {
 	// Replace with dynamic pulse_pose_file_location (use info from Pulse msg)
 	std::string pulse_pose_log_file_location =
-		"/home/dasl/uavrt_workspace/uavrt_source/log/detector_log/config_example/pulse_pose_output";
+		"/home/dasl/uavrt_workspace/uavrt_source/log/detector_log/config_example/pulse_pose_log.txt";
 	std::ofstream pulse_pose_log_file;
 
 	// Open for output in append mode (create a new file only if the file does not exist)
@@ -427,11 +427,7 @@ void TelemetryComponent::LogPulsePose(uavrt_interfaces::msg::PulsePose
 		pulse_pose_log_file << pulse_pose_message.pulse.predict_next_end.sec << ", ";
 		pulse_pose_log_file << pulse_pose_message.pulse.predict_next_end.nanosec << ", ";
 		pulse_pose_log_file << pulse_pose_message.pulse.snr << ", ";
-		pulse_pose_log_file << pulse_pose_message.pulse.snr_per_sample << ", ";
-		pulse_pose_log_file << pulse_pose_message.pulse.psd_sn << ", ";
-		pulse_pose_log_file << pulse_pose_message.pulse.psd_n << ", ";
-		pulse_pose_log_file << pulse_pose_message.pulse.dft_real << ", ";
-		pulse_pose_log_file << pulse_pose_message.pulse.dft_imag << ", ";
+		pulse_pose_log_file << pulse_pose_message.pulse.stft_score << ", ";
 		pulse_pose_log_file << pulse_pose_message.pulse.group_ind << ", ";
 		pulse_pose_log_file << pulse_pose_message.pulse.group_snr << ", ";
 		pulse_pose_log_file << pulse_pose_message.pulse.detection_status << ", ";

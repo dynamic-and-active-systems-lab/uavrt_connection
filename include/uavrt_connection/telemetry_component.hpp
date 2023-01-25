@@ -68,7 +68,7 @@ struct InterpolationResults {
 };
 
 // Create the Telemetry component object by inheriting from rclcpp::Node.
-// Note: The component objects in this package don't contain a (virtual)
+// Note: The component objects in the UAVRT package don't contain a (virtual)
 // deconstructor since it is not expected that the compenents be inherited from.
 class TelemetryComponent : public rclcpp::Node
 {

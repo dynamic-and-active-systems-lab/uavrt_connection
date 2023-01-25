@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
 	// Add some nodes to the executor which provide work for the executor during its "spin" function.
 	// An example of available work is executing a subscription callback, or a timer callback.
 	std::shared_ptr<uavrt_connection::TelemetryComponent> telemetry_component =
-		std::make_shared<uavrt_connection::TelemetryComponent>(options, qgcSystem);
+		std::make_shared<uavrt_connection::TelemetryComponent>(options, autopilotSystem);
 	std::shared_ptr<uavrt_connection::CommandComponent> command_component =
 		std::make_shared<uavrt_connection::CommandComponent>(options, qgcSystem);
 
