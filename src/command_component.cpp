@@ -40,17 +40,27 @@ CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
 	// Check that TunnelProtocol hasn't exceed limits
 	static_assert(TunnelProtocolValidateSizes, "TunnelProtocolValidateSizes failed");
 
-	// ROS 2 related - Publisher callbacks
-	start_subprocesses_publisher_ = this->create_publisher<uavrt_interfaces::msg::TagDef>(
+	// ROS 2 related - Publisher callback
+	start_subprocesses_publisher_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
 		"control_start_subprocess",
 		queue_size_);
 
-	// ROS 2 related - Publisher callbacks
+	// ROS 2 related - Publisher callback
 	stop_subprocesses_publisher_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
 		"control_stop_subprocess",
 		queue_size_);
 
-	// ROS 2 related - Subscriber callbacks
+	// ROS 2 related - Publisher callback
+	store_tag_information_publisher_ = this->create_publisher<uavrt_interfaces::msg::TagDef>(
+		"store_tag_information",
+		queue_size_);
+
+	// ROS 2 related - Publisher callback
+	release_tag_information_publisher_ = this->create_publisher<std_msgs::msg::Bool>(
+		"release_tag_information",
+		queue_size_);
+
+	// ROS 2 related - Subscriber callback
 	pulse_pose_subscriber_ = this->create_subscription<uavrt_interfaces::msg::PulsePose>(
 		"pulse_pose", queue_size_, std::bind(&CommandComponent::HandlePulseCommand,
 		                                     this,
@@ -118,8 +128,32 @@ void CommandComponent::HandleStartDetectionCommand()
 {
 	uint32_t command_result = COMMAND_RESULT_SUCCESS;
 
+	// https://docs.ros2.org/galactic/api/std_msgs/msg/Header.html
+	start_command_header_ = std_msgs::msg::Header();
+	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/DiagnosticArray.html
+	start_command_diagnostic_array_ = diagnostic_msgs::msg::DiagnosticArray();
+	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/DiagnosticStatus.html
+	start_command_diagnostic_status_ = diagnostic_msgs::msg::DiagnosticStatus();
+	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/KeyValue.html
+	start_command_key_value_ = diagnostic_msgs::msg::KeyValue();
+
+	// https://docs.ros2.org/galactic/api/builtin_interfaces/msg/Time.html
+	start_command_header_.stamp = this->get_clock()->now();
+	start_command_header_.frame_id = "start_command_subprocesses";
+
+	start_command_diagnostic_status_.level = '0';
+	start_command_diagnostic_status_.name = "NA";
+	start_command_diagnostic_status_.message = "start";
+	start_command_diagnostic_status_.hardware_id = "start all";
+
+	start_command_diagnostic_array_.status.push_back(start_command_diagnostic_status_);
+
+	start_command_diagnostic_array_.header = start_command_header_;
+
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully received start command.");
+
+	start_subprocesses_publisher_->publish(start_command_diagnostic_array_);
 
 	HandleAckCommand(COMMAND_ID_START_DETECTION, command_result);
 }
@@ -128,16 +162,11 @@ void CommandComponent::HandleStopDetectionCommand()
 {
 	uint32_t command_result = COMMAND_RESULT_SUCCESS;
 
-	// https://docs.ros2.org/galactic/api/std_msgs/msg/Header.html
 	stop_command_header_ = std_msgs::msg::Header();
-	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/DiagnosticArray.html
 	stop_command_diagnostic_array_ = diagnostic_msgs::msg::DiagnosticArray();
-	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/DiagnosticStatus.html
 	stop_command_diagnostic_status_ = diagnostic_msgs::msg::DiagnosticStatus();
-	// https://docs.ros2.org/galactic/api/diagnostic_msgs/msg/KeyValue.html
 	stop_command_key_value_ = diagnostic_msgs::msg::KeyValue();
 
-	// https://docs.ros2.org/galactic/api/builtin_interfaces/msg/Time.html
 	stop_command_header_.stamp = this->get_clock()->now();
 	stop_command_header_.frame_id = "stop_command_subprocesses";
 
@@ -176,17 +205,17 @@ void CommandComponent::HandleTagCommand(const mavlink_tunnel_t& tunnel)
 	tag_info_.interpulse_time_uncert = new_tag_info.intra_pulse_uncertainty_msecs;
 	tag_info_.interpulse_time_jitter = new_tag_info.intra_pulse_jitter_msecs;
 
-	if (tag_info_.tag_id[0] == 0)
+	if (tag_info_.tag_id == 0)
 	{
 		RCLCPP_ERROR(this->get_logger(), "Invalid tag id of 0.");
 		command_result  = COMMAND_RESULT_FAILURE;
 	}
-	else if (tag_info_.tag_id[0] != 0)
+	else if (tag_info_.tag_id != 0)
 	{
 		RCLCPP_INFO(this->get_logger(),
 		            "Successfully received tag info.");
 
-		start_subprocesses_publisher_->publish(tag_info_);
+		store_tag_information_publisher_->publish(tag_info_);
 	}
 
 	HandleAckCommand(COMMAND_ID_TAG, command_result);
@@ -197,40 +226,30 @@ void CommandComponent::HandlePulseCommand(
 {
 	TunnelProtocol::PulseInfo_t pulse_info;
 
-	// Refer to uavrt_interfaces/include/uavrt_interfaces/qgc_enum_class_definitions.hpp
+	// Refer to uavrt_interfaces/include/uavrt_interfaces/TunnelProtocol.h
 	// for descriptions on each of the data values.
 	pulse_info.header.command = COMMAND_ID_PULSE;
-	pulse_info.tag_id = std::stof(pulse_pose_message->pulse.tag_id);
+	pulse_info.tag_id = pulse_pose_message->pulse.tag_id;
 	pulse_info.frequency_hz = pulse_pose_message->pulse.frequency;
-	pulse_info.start_time_seconds = TimeToFloat(pulse_pose_message->pulse.start_time.sec,
-	                                            pulse_pose_message->pulse.start_time.nanosec);
-	pulse_info.end_time_seconds = TimeToFloat(pulse_pose_message->pulse.end_time.sec,
-	                                          pulse_pose_message->pulse.end_time.nanosec);
-	pulse_info.predict_next_start_seconds = TimeToFloat(pulse_pose_message->pulse.predict_next_start.sec,
-	                                                    pulse_pose_message->pulse.predict_next_start.nanosec);
-	pulse_info.predict_next_end_seconds = TimeToFloat(pulse_pose_message->pulse.predict_next_end.sec,
-	                                                  pulse_pose_message->pulse.predict_next_end.nanosec);
+	pulse_info.start_time_seconds = TimeToDouble(pulse_pose_message->pulse.start_time.sec,
+	                                                       pulse_pose_message->pulse.start_time.nanosec);
+	pulse_info.predict_next_start_seconds = TimeToDouble(pulse_pose_message->pulse.predict_next_start.sec,
+	                                                               pulse_pose_message->pulse.predict_next_start.nanosec);
 	pulse_info.snr = pulse_pose_message->pulse.snr;
-	pulse_info.snr_per_sample = pulse_pose_message->pulse.snr_per_sample;
-	pulse_info.psd_sn = pulse_pose_message->pulse.psd_sn;
-	pulse_info.psd_n = pulse_pose_message->pulse.psd_n;
-	pulse_info.dft_real = pulse_pose_message->pulse.dft_real;
-	pulse_info.dft_imag = pulse_pose_message->pulse.dft_imag;
+	pulse_info.stft_score = pulse_pose_message->pulse.stft_score;
 	pulse_info.group_ind = pulse_pose_message->pulse.group_ind;
 	pulse_info.group_snr = pulse_pose_message->pulse.group_snr;
 	pulse_info.detection_status = pulse_pose_message->pulse.detection_status;
 	pulse_info.confirmed_status = pulse_pose_message->pulse.confirmed_status;
 
-/*
-        pulse_info.position_x = pulse_pose_message->antenna_pose.position.x;
-    pulse_info.position_y = pulse_pose_message->antenna_pose.position.y;
-    pulse_info.position_z = pulse_pose_message->antenna_pose.position.z;
+	pulse_info.position_x = pulse_pose_message->antenna_pose.position.x;
+	pulse_info.position_y = pulse_pose_message->antenna_pose.position.y;
+	pulse_info.position_z = pulse_pose_message->antenna_pose.position.z;
 
-    pulse_info.orientation_x = pulse_pose_message->antenna_pose.orientation.x;
-    pulse_info.orientation_y = pulse_pose_message->antenna_pose.orientation.y;
-    pulse_info.orientation_z = pulse_pose_message->antenna_pose.orientation.z;
-    pulse_info.orientation_w = pulse_pose_message->antenna_pose.orientation.w;
- */
+	pulse_info.orientation_x = pulse_pose_message->antenna_pose.orientation.x;
+	pulse_info.orientation_y = pulse_pose_message->antenna_pose.orientation.y;
+	pulse_info.orientation_z = pulse_pose_message->antenna_pose.orientation.z;
+	pulse_info.orientation_w = pulse_pose_message->antenna_pose.orientation.w;
 
 	SendTunnelMessage(&pulse_info, sizeof(pulse_info));
 
@@ -238,6 +257,7 @@ void CommandComponent::HandlePulseCommand(
 	            "Successfully sent pulse pose message to the ground.");
 }
 
+// Currently unused. We send back an ack to avoid errors on QGC's side.
 void CommandComponent::HandleStartTagCommand()
 {
 	RCLCPP_INFO(this->get_logger(),
@@ -250,6 +270,12 @@ void CommandComponent::HandleEndTagCommand()
 {
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully received end tag command.");
+
+	release_tag_information_bool_ = std_msgs::msg::Bool();
+
+	release_tag_information_bool_.data = true;
+
+	release_tag_information_publisher_->publish(release_tag_information_bool_);
 
 	HandleAckCommand(COMMAND_ID_END_TAGS, COMMAND_RESULT_SUCCESS);
 }
@@ -289,6 +315,8 @@ void CommandComponent::SendStatusText(const char* text)
 
 	    memset(&statustext, 0, sizeof(statustext));
 
+        // Info shows up under megaphone
+        // Warning and above shows as pop up
 	    statustext.severity = MAV_SEVERITY_INFO;
 
 	    strncpy(statustext.text, text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
@@ -303,16 +331,16 @@ void CommandComponent::SendStatusText(const char* text)
 	 */
 }
 
-// Helper function for values that can not be inherently converted to floats
+// Helper function for values that can not be inherently converted to doubles
 // (like string and ROS 2 builtin_interfaces/Time). These values need to be
 // manually converted.
-float CommandComponent::TimeToFloat(int seconds, uint32_t nanoseconds)
+double CommandComponent::TimeToDouble(int seconds, uint32_t nanoseconds)
 {
 	std::string uncoverted_time_value =
 		std::to_string(seconds) + "." +
 		std::to_string(nanoseconds);
 
-	float converted_time_value = std::stof(uncoverted_time_value);
+	double converted_time_value = std::stod(uncoverted_time_value);
 
 	return converted_time_value;
 }

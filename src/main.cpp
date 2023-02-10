@@ -163,6 +163,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	// TODO: Remove commented out code chunks (check if they work or not first)
+	// and update variable names to use underscores.
+	
 	// std::shared_ptr<mavsdk::System> system = GetSystem(mavsdk);
 
 	// if (!system)

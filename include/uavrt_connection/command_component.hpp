@@ -20,6 +20,7 @@
 // ROS 2 header files
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/header.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
 #include "diagnostic_msgs/msg/key_value.hpp"
@@ -46,7 +47,7 @@ explicit CommandComponent(const rclcpp::NodeOptions &options,
 
 private:
 // ROS 2 related - Private functions
-float TimeToFloat(int seconds, uint32_t nanoseconds);
+double TimeToDouble(int seconds, uint32_t nanoseconds);
 
 // MAVSDK related - Private functions
 void CommandCallback(const mavlink_message_t& message);
@@ -66,12 +67,21 @@ void HandleStartTagCommand();
 void HandleEndTagCommand();
 
 // ROS 2 related - Private variables
-rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr start_subprocesses_publisher_;
+rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr start_subprocesses_publisher_;
 rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr stop_subprocesses_publisher_;
+
+rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr store_tag_information_publisher_;
+rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr release_tag_information_publisher_;
 
 rclcpp::Subscription<uavrt_interfaces::msg::PulsePose>::SharedPtr pulse_pose_subscriber_;
 
 int queue_size_ = 10;
+
+// For use in start command callback
+std_msgs::msg::Header start_command_header_;
+diagnostic_msgs::msg::DiagnosticArray start_command_diagnostic_array_;
+diagnostic_msgs::msg::DiagnosticStatus start_command_diagnostic_status_;
+diagnostic_msgs::msg::KeyValue start_command_key_value_;
 
 // For use in stop command callback
 std_msgs::msg::Header stop_command_header_;
@@ -81,6 +91,7 @@ diagnostic_msgs::msg::KeyValue stop_command_key_value_;
 
 // For use in tag command callback
 uavrt_interfaces::msg::TagDef tag_info_;
+std_msgs::msg::Bool release_tag_information_bool_;
 
 // MAVSDK related - Private variables
 mavsdk::MavlinkPassthrough mavlink_passthrough_;
