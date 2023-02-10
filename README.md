@@ -1,6 +1,6 @@
 # UAV-RT Connection package
 
-This ROS 2 Node is responsible for establishing and monintoring a UDP or serial onnection with the PX4, as well as encoding and decoding MAVLink messages that are passed through the companion computer [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) (with a [SiK 915 MHz telemetry radio](https://ardupilot.org/copter/docs/common-sik-telemetry-radio.html#sik-telemetry-radio)) to the ground control station (GCS) PX4 (also connected to a 915 MHz radio). The GCS is running a custom version of QGroundControl (QGC) developed by [Don Gagne](https://github.com/DonLakeFlyer).
+This ROS 2 Node is responsible for establishing and monitoring a UDP or serial connection with a [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html), as well as encoding and decoding MAVLink messages that are passed through the companion computer's PX4 autopilot (with a [SiK 915 MHz telemetry radio](https://ardupilot.org/copter/docs/common-sik-telemetry-radio.html#sik-telemetry-radio)) to the ground control station's (GCS) PX4 autopilot (also connected to a 915 MHz radio). The GCS is running a custom version of QGroundControl (QGC) developed by [Don Gagne](https://github.com/DonLakeFlyer).
 
 The development of this code was funded via National Science Foundation grant no. 2104570.
 
@@ -32,7 +32,7 @@ The supporting documentation for this project can be found here. (TBD)
 
 The system requirments for the use of this package can be found here. (TBD)
 
-# Installaton
+# Installation
 
 This installation assumes that you have completed the installation process for uavrt_source. 
 
@@ -88,4 +88,4 @@ Troubleshooting tips can be found here. (TBD)
 
 # License
 
-This codebase is released under the GNU Lesser General Public License v3 or later.
+This codebase is released under the GNU General Public License v3.0. 
