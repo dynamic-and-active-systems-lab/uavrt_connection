@@ -32,7 +32,7 @@ The supporting documentation for this project can be found here. (TBD)
 
 The system requirments for the use of this package can be found here. (TBD)
 
-# Installaton
+# Installation
 
 This installation assumes that you have completed the installation process for uavrt_source. 
 
