@@ -23,6 +23,8 @@
 #include <cmath>
 #include <iostream>     // std::cout, std::fixed
 #include <iomanip>      // std::setprecision
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
 
 // Project header files
 #include "uavrt_connection/command_component.hpp"
@@ -51,7 +53,7 @@ CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
 		queue_size_);
 
 	// ROS 2 related - Publisher callback
-	store_tag_information_publisher_ = this->create_publisher<uavrt_interfaces::msg::TagDef>(
+	store_tag_information_publisher_ = this->create_publisher<uavrt_interfaces::msg::Tag>(
 		"store_tag_information",
 		queue_size_);
 
@@ -195,7 +197,7 @@ void CommandComponent::HandleTagCommand(const mavlink_tunnel_t& tunnel)
 	memcpy(&new_tag_info, tunnel.payload, sizeof(new_tag_info));
 
 	// https://github.com/dynamic-and-active-systems-lab/uavrt_interfaces/blob/main/msg/TagDef.msg
-	tag_info_ = uavrt_interfaces::msg::TagDef();
+	tag_info_ = uavrt_interfaces::msg::Tag();
 
 	tag_info_.tag_id = new_tag_info.id;
 	tag_info_.frequency = new_tag_info.frequency_hz;
@@ -204,6 +206,8 @@ void CommandComponent::HandleTagCommand(const mavlink_tunnel_t& tunnel)
 	tag_info_.interpulse_time_2 = new_tag_info.intra_pulse2_msecs;
 	tag_info_.interpulse_time_uncert = new_tag_info.intra_pulse_uncertainty_msecs;
 	tag_info_.interpulse_time_jitter = new_tag_info.intra_pulse_jitter_msecs;
+    tag_info_.k = new_tag_info.k;
+    tag_info_.false_alarm_probability = new_tag_info.false_alarm_probability;
 
 	if (tag_info_.tag_id == 0)
 	{
@@ -252,6 +256,11 @@ void CommandComponent::HandlePulseCommand(
 	pulse_info.orientation_w = pulse_pose_message->antenna_pose.orientation.w;
 
 	SendTunnelMessage(&pulse_info, sizeof(pulse_info));
+
+    // Delay to avoid tunnel messages being dropped by MAVLINK.
+    // TODO: Replace chrono with time value from telemetry_component.hpp.
+    // Remove import. 
+    std::this_thread::sleep_for (std::chrono::milliseconds(10));
 
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully sent pulse pose message to the ground.");

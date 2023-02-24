@@ -405,9 +405,10 @@ InterpolationResults TelemetryComponent::InterpolatePosition(
 void TelemetryComponent::LogPulsePose(uavrt_interfaces::msg::PulsePose
                                       pulse_pose_message)
 {
-	// Replace with dynamic pulse_pose_file_location (use info from Pulse msg)
+	// Dynamic pulse_pose_file_location (directory info from Pulse msg)
 	std::string pulse_pose_log_file_location =
-		"/home/dasl/uavrt_workspace/uavrt_source/log/detector_log/config_example/pulse_pose_log.txt";
+        (pulse_pose_message.pulse.detector_dir).append("/output/pulse_pose_log.txt");
+
 	std::ofstream pulse_pose_log_file;
 
 	// Open for output in append mode (create a new file only if the file does not exist)

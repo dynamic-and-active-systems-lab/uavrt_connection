@@ -33,7 +33,7 @@
 // Project header files
 #include "uavrt_interfaces/msg/pulse.hpp"
 #include "uavrt_interfaces/msg/pulse_pose.hpp"
-#include "uavrt_interfaces/msg/tag_def.hpp"
+#include "uavrt_interfaces/msg/tag.hpp"
 #include "uavrt_interfaces/TunnelProtocol.h"
 
 namespace uavrt_connection
@@ -70,7 +70,7 @@ void HandleEndTagCommand();
 rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr start_subprocesses_publisher_;
 rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr stop_subprocesses_publisher_;
 
-rclcpp::Publisher<uavrt_interfaces::msg::TagDef>::SharedPtr store_tag_information_publisher_;
+rclcpp::Publisher<uavrt_interfaces::msg::Tag>::SharedPtr store_tag_information_publisher_;
 rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr release_tag_information_publisher_;
 
 rclcpp::Subscription<uavrt_interfaces::msg::PulsePose>::SharedPtr pulse_pose_subscriber_;
@@ -90,7 +90,7 @@ diagnostic_msgs::msg::DiagnosticStatus stop_command_diagnostic_status_;
 diagnostic_msgs::msg::KeyValue stop_command_key_value_;
 
 // For use in tag command callback
-uavrt_interfaces::msg::TagDef tag_info_;
+uavrt_interfaces::msg::Tag tag_info_;
 std_msgs::msg::Bool release_tag_information_bool_;
 
 // MAVSDK related - Private variables
