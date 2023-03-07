@@ -45,6 +45,8 @@
 // It is unclear as to whether the example code falls under the BSD 3-Clause
 // license used by the MAVSDK developers.
 
+// TODO: Clear up the section above^^^
+
 // C++ standard library headers
 #include <memory>
 #include <future>
@@ -88,7 +90,7 @@ std::shared_ptr<mavsdk::System> GetSystem(mavsdk::Mavsdk& mavsdk)
 	// use subscribers, publishers, etc., we might as well use the first option
 	// for everywhere aside from main.
 	RCLCPP_INFO(rclcpp::get_logger("Main"), "Waiting to discover system...");
-	auto system_promise = std::promise<std::shared_ptr<mavsdk::System> >{};
+	auto system_promise = std::promise<std::shared_ptr<mavsdk::System> > {};
 	auto system_future = system_promise.get_future();
 
 	// We wait for new systems to be discovered, once we find one that has an
@@ -98,18 +100,18 @@ std::shared_ptr<mavsdk::System> GetSystem(mavsdk::Mavsdk& mavsdk)
 		auto system = mavsdk.systems().back();
 
 		if (system->has_autopilot()) {
-		    RCLCPP_INFO(rclcpp::get_logger("Main"), "Discovered autopilot.");
+			RCLCPP_INFO(rclcpp::get_logger("Main"), "Discovered autopilot.");
 
-		    // Unsubscribe again as we only want to find one system.
-		    mavsdk.subscribe_on_new_system(nullptr);
-		    system_promise.set_value(system);
+			// Unsubscribe again as we only want to find one system.
+			mavsdk.subscribe_on_new_system(nullptr);
+			system_promise.set_value(system);
 		}
 	});
 
 	// We usually receive heartbeats at 1Hz
 	// This value should be greater than 1
 	if (system_future.wait_for(std::chrono::seconds(3)) ==
-	    std::future_status::timeout)
+	        std::future_status::timeout)
 	{
 		RCLCPP_ERROR(rclcpp::get_logger("Main"), "No autopilot found.");
 		return {};
@@ -165,7 +167,7 @@ int main(int argc, char *argv[])
 
 	// TODO: Remove commented out code chunks (check if they work or not first)
 	// and update variable names to use underscores.
-	
+
 	// std::shared_ptr<mavsdk::System> system = GetSystem(mavsdk);
 
 	// if (!system)
@@ -182,10 +184,10 @@ int main(int argc, char *argv[])
 
 	while (!foundAutopilot || !foundQGC) {
 		std::vector< std::shared_ptr< mavsdk::System > > systems = mavsdk.systems();
-		for (size_t i=0; i<systems.size(); i++) {
+		for (size_t i = 0; i < systems.size(); i++) {
 			std::shared_ptr< mavsdk::System > system = systems[i];
 			std::vector< uint8_t > compIds = system->component_ids();
-			for (size_t i=0; i < compIds.size(); i++) {
+			for (size_t i = 0; i < compIds.size(); i++) {
 				auto compId = compIds[i];
 				if (!foundAutopilot && compId == MAV_COMP_ID_AUTOPILOT1) {
 					std::cout << "Discovered Autopilot" << std::endl;
@@ -221,9 +223,9 @@ int main(int argc, char *argv[])
 	// Add some nodes to the executor which provide work for the executor during its "spin" function.
 	// An example of available work is executing a subscription callback, or a timer callback.
 	std::shared_ptr<uavrt_connection::TelemetryComponent> telemetry_component =
-		std::make_shared<uavrt_connection::TelemetryComponent>(options, autopilotSystem);
+	    std::make_shared<uavrt_connection::TelemetryComponent>(options, autopilotSystem);
 	std::shared_ptr<uavrt_connection::CommandComponent> command_component =
-		std::make_shared<uavrt_connection::CommandComponent>(options, qgcSystem);
+	    std::make_shared<uavrt_connection::CommandComponent>(options, qgcSystem);
 
 	// One thread of a Static Single-Threaded Executor is used to serve two nodes together.
 	executor.add_node(telemetry_component);

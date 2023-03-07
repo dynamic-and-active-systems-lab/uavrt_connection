@@ -43,25 +43,25 @@ namespace uavrt_connection
 TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
                                        std::shared_ptr<mavsdk::System> system)
 	: Node("TelemetryComponent", options),
-	mavsdk_telemetry(system)
+	  mavsdk_telemetry(system)
 {
 	RCLCPP_INFO(this->get_logger(), "Telemetry component successfully created.");
 
 	// ROS 2 related - Publisher callbacks
 	antenna_pose_publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-		"antenna_pose", queue_size_);
+	                              "antenna_pose", queue_size_);
 	antenna_pose_timer_ = this->create_wall_timer(
-		antenna_pose_period_ms_, std::bind(&TelemetryComponent::AntennaPoseCallback,
-		                                   this));
+	                          antenna_pose_period_ms_, std::bind(&TelemetryComponent::AntennaPoseCallback,
+	                                  this));
 
 	// ROS 2 related - Subscriber callbacks
 	pulse_subscriber_ = this->create_subscription<uavrt_interfaces::msg::Pulse>(
-		"pulse", queue_size_, std::bind(&TelemetryComponent::PulseCallback,
-		                                this,
-		                                std::placeholders::_1));
+	                        "pulse", queue_size_, std::bind(&TelemetryComponent::PulseCallback,
+	                                this,
+	                                std::placeholders::_1));
 
 	pulse_pose_publisher_ = this->create_publisher<uavrt_interfaces::msg::PulsePose>(
-		"pulse_pose", queue_size_);
+	                            "pulse_pose", queue_size_);
 
 	// MAVSDK related - Subsriber rate variables
 	mavsdk_telemetry.set_rate_position(postion_subscribe_rate_);
@@ -69,15 +69,15 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 
 	// MAVSDK related - Subscriber callbacks
 	system->subscribe_is_connected(std::bind(&TelemetryComponent::ConnectionCallback,
-	                                         this,
-	                                         std::placeholders::_1));
+	                               this,
+	                               std::placeholders::_1));
 
 	mavsdk_telemetry.subscribe_position(std::bind(&TelemetryComponent::PositionCallback,
-	                                              this,
-	                                              std::placeholders::_1));
+	                                    this,
+	                                    std::placeholders::_1));
 	mavsdk_telemetry.subscribe_attitude_quaternion(std::bind(&TelemetryComponent::QuaternionCallback,
-	                                                         this,
-	                                                         std::placeholders::_1));
+	        this,
+	        std::placeholders::_1));
 }
 
 // I tried placing this function in main and passing a shared pointer to each
@@ -121,8 +121,8 @@ void TelemetryComponent::AntennaPoseCallback()
 		antenna_pose_header_.frame_id = "antenna_pose";
 
 		std::string antenna_pose_time_value_ =
-			std::to_string(antenna_pose_header_.stamp.sec) + "." +
-			std::to_string(antenna_pose_header_.stamp.nanosec);
+		    std::to_string(antenna_pose_header_.stamp.sec) + "." +
+		    std::to_string(antenna_pose_header_.stamp.nanosec);
 		antenna_pose_time_vector_.push_back(std::stod(antenna_pose_time_value_));
 
 		antenna_pose_point_.x = position_.latitude_deg;
@@ -135,11 +135,11 @@ void TelemetryComponent::AntennaPoseCallback()
 		// afterwards, we would spend time transversing the array and vectors
 		// for the position values. Same for quaternion.
 		antenna_pose_position_array_[
-			static_cast<int>(PositionArray::LatitudeIndex)].push_back(antenna_pose_point_.x);
+		    static_cast<int>(PositionArray::LatitudeIndex)].push_back(antenna_pose_point_.x);
 		antenna_pose_position_array_[
-			static_cast<int>(PositionArray::LongitudeIndex)].push_back(antenna_pose_point_.y);
+		    static_cast<int>(PositionArray::LongitudeIndex)].push_back(antenna_pose_point_.y);
 		antenna_pose_position_array_[
-			static_cast<int>(PositionArray::AltitudeIndex)].push_back(antenna_pose_point_.z);
+		    static_cast<int>(PositionArray::AltitudeIndex)].push_back(antenna_pose_point_.z);
 
 		antenna_pose_quaternion_.w = quaternion_.w;
 		antenna_pose_quaternion_.x = quaternion_.x;
@@ -147,13 +147,13 @@ void TelemetryComponent::AntennaPoseCallback()
 		antenna_pose_quaternion_.z = quaternion_.z;
 
 		antenna_pose_quaternion_array_[
-			static_cast<int>(QuaternionArray::WIndex)].push_back(antenna_pose_quaternion_.w);
+		    static_cast<int>(QuaternionArray::WIndex)].push_back(antenna_pose_quaternion_.w);
 		antenna_pose_quaternion_array_[
-			static_cast<int>(QuaternionArray::XIndex)].push_back(antenna_pose_quaternion_.x);
+		    static_cast<int>(QuaternionArray::XIndex)].push_back(antenna_pose_quaternion_.x);
 		antenna_pose_quaternion_array_[
-			static_cast<int>(QuaternionArray::YIndex)].push_back(antenna_pose_quaternion_.y);
+		    static_cast<int>(QuaternionArray::YIndex)].push_back(antenna_pose_quaternion_.y);
 		antenna_pose_quaternion_array_[
-			static_cast<int>(QuaternionArray::ZIndex)].push_back(antenna_pose_quaternion_.z);
+		    static_cast<int>(QuaternionArray::ZIndex)].push_back(antenna_pose_quaternion_.z);
 
 		antenna_pose_pose_.position = antenna_pose_point_;
 		antenna_pose_pose_.orientation = antenna_pose_quaternion_;
@@ -190,7 +190,7 @@ void TelemetryComponent::QuaternionCallback(mavsdk::Telemetry::Quaternion quater
 }
 
 void TelemetryComponent::PulseCallback(
-	uavrt_interfaces::msg::Pulse::SharedPtr pulse_message)
+    uavrt_interfaces::msg::Pulse::SharedPtr pulse_message)
 {
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully received pulse.");
@@ -209,13 +209,13 @@ void TelemetryComponent::PulseCallback(
 		pulse_pulse_pose_ = uavrt_interfaces::msg::PulsePose();
 
 		std::string pulse_start_time =
-			std::to_string(pulse_message->start_time.sec) + "." +
-			std::to_string(pulse_message->start_time.nanosec);
+		    std::to_string(pulse_message->start_time.sec) + "." +
+		    std::to_string(pulse_message->start_time.nanosec);
 		std::string pulse_end_time =
-			std::to_string(pulse_message->end_time.sec) + "." +
-			std::to_string(pulse_message->end_time.nanosec);
+		    std::to_string(pulse_message->end_time.sec) + "." +
+		    std::to_string(pulse_message->end_time.nanosec);
 		double pulse_average_time =
-			(std::stod(pulse_start_time) + std::stod(pulse_end_time)) / 2;
+		    (std::stod(pulse_start_time) + std::stod(pulse_end_time)) / 2;
 
 		// Interpolate/Slerp
 		retrieved_results = InterpolatePosition(pulse_average_time);
@@ -227,13 +227,13 @@ void TelemetryComponent::PulseCallback(
 
 		// Quaternion
 		pulse_quaternion_.w =
-			retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::WIndex)];
+		    retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::WIndex)];
 		pulse_quaternion_.x =
-			retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::XIndex)];
+		    retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::XIndex)];
 		pulse_quaternion_.y =
-			retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::YIndex)];
+		    retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::YIndex)];
 		pulse_quaternion_.z =
-			retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::ZIndex)];
+		    retrieved_results.interpolated_quaternion.a[static_cast<int>(QuaternionArray::ZIndex)];
 
 		// Create PulsePose object
 		pulse_pose_.position = pulse_point_;
@@ -263,7 +263,7 @@ void TelemetryComponent::PulseCallback(
 // std::begin/std::end vs .end() and .begin:
 // https://stackoverflow.com/questions/8452130/when-to-use-stdbegin-and-stdend-instead-of-container-specific-versions
 InterpolationResults TelemetryComponent::InterpolatePosition(
-	double pulse_average_time)
+    double pulse_average_time)
 {
 	InterpolationResults generated_results;
 	uint16_t seven_hours_in_seconds = 25200;
@@ -284,20 +284,20 @@ InterpolationResults TelemetryComponent::InterpolatePosition(
 
 	// This will return the first value that is less than the key
 	std::vector<double>::iterator upper_bound_iterator = std::upper_bound(
-		antenna_pose_time_vector_.begin(),
-		antenna_pose_time_vector_.end(),
-		pulse_average_time,
-		std::greater<double>());
+	            antenna_pose_time_vector_.begin(),
+	            antenna_pose_time_vector_.end(),
+	            pulse_average_time,
+	            std::greater<double>());
 
 	// This will return the first value that is greater than the key
 	std::vector<double>::iterator lower_bound_iterator = std::lower_bound(
-		antenna_pose_time_vector_.begin(),
-		antenna_pose_time_vector_.end(),
-		pulse_average_time,
-		std::less<double>());
+	            antenna_pose_time_vector_.begin(),
+	            antenna_pose_time_vector_.end(),
+	            pulse_average_time,
+	            std::less<double>());
 
 	if (upper_bound_iterator == antenna_pose_time_vector_.end() &&
-	    lower_bound_iterator == antenna_pose_time_vector_.end())
+	        lower_bound_iterator == antenna_pose_time_vector_.end())
 	{
 		RCLCPP_ERROR(this->get_logger(),
 		             "There does not exist a stored time value that is lower "
@@ -324,33 +324,33 @@ InterpolationResults TelemetryComponent::InterpolatePosition(
 	// I don't check whether value is valid at this point, since we would
 	// have been stopped early if the value didn't exist.
 	int upper_bound_index =
-		std::distance(antenna_pose_time_vector_.begin(),
-		              std::find(antenna_pose_time_vector_.begin(),
-		                        antenna_pose_time_vector_.end(),
-		                        *upper_bound_iterator));
+	    std::distance(antenna_pose_time_vector_.begin(),
+	                  std::find(antenna_pose_time_vector_.begin(),
+	                            antenna_pose_time_vector_.end(),
+	                            *upper_bound_iterator));
 	int lower_bound_index =
-		std::distance(antenna_pose_time_vector_.begin(),
-		              std::find(antenna_pose_time_vector_.begin(),
-		                        antenna_pose_time_vector_.end(),
-		                        *lower_bound_iterator));
+	    std::distance(antenna_pose_time_vector_.begin(),
+	                  std::find(antenna_pose_time_vector_.begin(),
+	                            antenna_pose_time_vector_.end(),
+	                            *lower_bound_iterator));
 
 	if (upper_bound_index > 0) {upper_bound_index -= 1;}
 	else if (lower_bound_index > 0) {lower_bound_index -= 1;}
 
 	generated_results.interpolated_latitude = std::lerp(
-		antenna_pose_position_array_[static_cast<int>(PositionArray::LatitudeIndex)].at(upper_bound_index),
-		antenna_pose_position_array_[static_cast<int>(PositionArray::LatitudeIndex)].at(lower_bound_index),
-		0.5);
+	            antenna_pose_position_array_[static_cast<int>(PositionArray::LatitudeIndex)].at(upper_bound_index),
+	            antenna_pose_position_array_[static_cast<int>(PositionArray::LatitudeIndex)].at(lower_bound_index),
+	            0.5);
 
 	generated_results.interpolated_logitude = std::lerp(
-		antenna_pose_position_array_[static_cast<int>(PositionArray::LongitudeIndex)].at(upper_bound_index),
-		antenna_pose_position_array_[static_cast<int>(PositionArray::LongitudeIndex)].at(lower_bound_index),
-		0.5);
+	            antenna_pose_position_array_[static_cast<int>(PositionArray::LongitudeIndex)].at(upper_bound_index),
+	            antenna_pose_position_array_[static_cast<int>(PositionArray::LongitudeIndex)].at(lower_bound_index),
+	            0.5);
 
 	generated_results.interpolated_altitude = std::lerp(
-		antenna_pose_position_array_[static_cast<int>(PositionArray::AltitudeIndex)].at(upper_bound_index),
-		antenna_pose_position_array_[static_cast<int>(PositionArray::AltitudeIndex)].at(lower_bound_index),
-		0.5);
+	            antenna_pose_position_array_[static_cast<int>(PositionArray::AltitudeIndex)].at(upper_bound_index),
+	            antenna_pose_position_array_[static_cast<int>(PositionArray::AltitudeIndex)].at(lower_bound_index),
+	            0.5);
 
 	// Quaternion interpolation between two quaternions
 	// We use the boost::qvm::slerp function for this:
@@ -372,30 +372,30 @@ InterpolationResults TelemetryComponent::InterpolatePosition(
 	boost::qvm::quat<float> pulse_quaternion_upper_index;
 
 	pulse_quaternion_upper_index.a[static_cast<int>(QuaternionArray::WIndex)] =
-		antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::WIndex)].at(upper_bound_index);
+	    antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::WIndex)].at(upper_bound_index);
 	pulse_quaternion_upper_index.a[static_cast<int>(QuaternionArray::XIndex)] =
-		antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::XIndex)].at(upper_bound_index);
+	    antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::XIndex)].at(upper_bound_index);
 	pulse_quaternion_upper_index.a[static_cast<int>(QuaternionArray::YIndex)] =
-		antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::YIndex)].at(upper_bound_index);
+	    antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::YIndex)].at(upper_bound_index);
 	pulse_quaternion_upper_index.a[static_cast<int>(QuaternionArray::ZIndex)] =
-		antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::ZIndex)].at(upper_bound_index);
+	    antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::ZIndex)].at(upper_bound_index);
 
 	boost::qvm::quat<float> pulse_quaternion_lower_index;
 
 	pulse_quaternion_lower_index.a[static_cast<int>(QuaternionArray::WIndex)] =
-		antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::WIndex)].at(lower_bound_index);
+	    antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::WIndex)].at(lower_bound_index);
 	pulse_quaternion_lower_index.a[static_cast<int>(QuaternionArray::XIndex)] =
-		antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::XIndex)].at(lower_bound_index);
+	    antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::XIndex)].at(lower_bound_index);
 	pulse_quaternion_lower_index.a[static_cast<int>(QuaternionArray::YIndex)] =
-		antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::YIndex)].at(lower_bound_index);
+	    antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::YIndex)].at(lower_bound_index);
 	pulse_quaternion_lower_index.a[static_cast<int>(QuaternionArray::ZIndex)] =
-		antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::ZIndex)].at(lower_bound_index);
+	    antenna_pose_quaternion_array_[static_cast<int>(QuaternionArray::ZIndex)].at(lower_bound_index);
 
 	boost::qvm::quat<float> pulse_quaternion_slerp_result =
-		boost::qvm::slerp(
-			pulse_quaternion_upper_index,
-			pulse_quaternion_lower_index,
-			0.5);
+	    boost::qvm::slerp(
+	        pulse_quaternion_upper_index,
+	        pulse_quaternion_lower_index,
+	        0.5);
 
 	generated_results.interpolated_quaternion = pulse_quaternion_slerp_result;
 
@@ -407,7 +407,7 @@ void TelemetryComponent::LogPulsePose(uavrt_interfaces::msg::PulsePose
 {
 	// Dynamic pulse_pose_file_location (directory info from Pulse msg)
 	std::string pulse_pose_log_file_location =
-        (pulse_pose_message.pulse.detector_dir).append("/output/pulse_pose_log.txt");
+	    (pulse_pose_message.pulse.detector_dir).append("/output/pulse_pose_log.txt");
 
 	std::ofstream pulse_pose_log_file;
 
@@ -443,7 +443,7 @@ void TelemetryComponent::LogPulsePose(uavrt_interfaces::msg::PulsePose
 		pulse_pose_log_file << pulse_pose_message.antenna_pose.orientation.z << ", ";
 		pulse_pose_log_file << pulse_pose_message.antenna_pose.orientation.w << "\n";
 	}
-	else if(pulse_pose_log_file.is_open() == false)
+	else if (pulse_pose_log_file.is_open() == false)
 	{
 		RCLCPP_ERROR(this->get_logger(),
 		             "Unable to open/append to pulse pose log file!");

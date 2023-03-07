@@ -35,7 +35,7 @@ namespace uavrt_connection
 CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
                                    std::shared_ptr<mavsdk::System> system)
 	: Node("CommandComponent", options),
-	mavlink_passthrough_(system)
+	  mavlink_passthrough_(system)
 {
 	RCLCPP_INFO(this->get_logger(), "Command component successfully created.");
 
@@ -44,35 +44,35 @@ CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
 
 	// ROS 2 related - Publisher callback
 	start_subprocesses_publisher_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
-		"control_start_subprocess",
-		queue_size_);
+	                                    "control_start_subprocess",
+	                                    queue_size_);
 
 	// ROS 2 related - Publisher callback
 	stop_subprocesses_publisher_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
-		"control_stop_subprocess",
-		queue_size_);
+	                                   "control_stop_subprocess",
+	                                   queue_size_);
 
 	// ROS 2 related - Publisher callback
 	store_tag_information_publisher_ = this->create_publisher<uavrt_interfaces::msg::Tag>(
-		"store_tag_information",
-		queue_size_);
+	                                       "store_tag_information",
+	                                       queue_size_);
 
 	// ROS 2 related - Publisher callback
 	release_tag_information_publisher_ = this->create_publisher<std_msgs::msg::Bool>(
-		"release_tag_information",
-		queue_size_);
+	        "release_tag_information",
+	        queue_size_);
 
 	// ROS 2 related - Subscriber callback
 	pulse_pose_subscriber_ = this->create_subscription<uavrt_interfaces::msg::PulsePose>(
-		"pulse_pose", queue_size_, std::bind(&CommandComponent::HandlePulseCommand,
-		                                     this,
-		                                     std::placeholders::_1));
+	                             "pulse_pose", queue_size_, std::bind(&CommandComponent::HandlePulseCommand,
+	                                     this,
+	                                     std::placeholders::_1));
 
 	// MAVSDK related
 	mavlink_passthrough_.subscribe_message_async(MAVLINK_MSG_ID_TUNNEL,
-	                                             std::bind(&CommandComponent::CommandCallback,
-	                                                       this,
-	                                                       std::placeholders::_1));
+	        std::bind(&CommandComponent::CommandCallback,
+	                  this,
+	                  std::placeholders::_1));
 }
 
 void CommandComponent::CommandCallback(const mavlink_message_t& message)
@@ -206,8 +206,8 @@ void CommandComponent::HandleTagCommand(const mavlink_tunnel_t& tunnel)
 	tag_info_.interpulse_time_2 = new_tag_info.intra_pulse2_msecs;
 	tag_info_.interpulse_time_uncert = new_tag_info.intra_pulse_uncertainty_msecs;
 	tag_info_.interpulse_time_jitter = new_tag_info.intra_pulse_jitter_msecs;
-    tag_info_.k = new_tag_info.k;
-    tag_info_.false_alarm_probability = new_tag_info.false_alarm_probability;
+	tag_info_.k = new_tag_info.k;
+	tag_info_.false_alarm_probability = new_tag_info.false_alarm_probability;
 
 	if (tag_info_.tag_id == 0)
 	{
@@ -226,7 +226,7 @@ void CommandComponent::HandleTagCommand(const mavlink_tunnel_t& tunnel)
 }
 
 void CommandComponent::HandlePulseCommand(
-	uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message)
+    uavrt_interfaces::msg::PulsePose::SharedPtr pulse_pose_message)
 {
 	TunnelProtocol::PulseInfo_t pulse_info;
 
@@ -236,9 +236,9 @@ void CommandComponent::HandlePulseCommand(
 	pulse_info.tag_id = pulse_pose_message->pulse.tag_id;
 	pulse_info.frequency_hz = pulse_pose_message->pulse.frequency;
 	pulse_info.start_time_seconds = TimeToDouble(pulse_pose_message->pulse.start_time.sec,
-	                                                       pulse_pose_message->pulse.start_time.nanosec);
+	                                pulse_pose_message->pulse.start_time.nanosec);
 	pulse_info.predict_next_start_seconds = TimeToDouble(pulse_pose_message->pulse.predict_next_start.sec,
-	                                                               pulse_pose_message->pulse.predict_next_start.nanosec);
+	                                        pulse_pose_message->pulse.predict_next_start.nanosec);
 	pulse_info.snr = pulse_pose_message->pulse.snr;
 	pulse_info.stft_score = pulse_pose_message->pulse.stft_score;
 	pulse_info.group_ind = pulse_pose_message->pulse.group_ind;
@@ -257,10 +257,10 @@ void CommandComponent::HandlePulseCommand(
 
 	SendTunnelMessage(&pulse_info, sizeof(pulse_info));
 
-    // Delay to avoid tunnel messages being dropped by MAVLINK.
-    // TODO: Replace chrono with time value from telemetry_component.hpp.
-    // Remove import. 
-    std::this_thread::sleep_for (std::chrono::milliseconds(10));
+	// Delay to avoid tunnel messages being dropped by MAVLINK.
+	// TODO: Replace chrono with time value from telemetry_component.hpp.
+	// Remove import.
+	std::this_thread::sleep_for (std::chrono::milliseconds(10));
 
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully sent pulse pose message to the ground.");
@@ -290,7 +290,7 @@ void CommandComponent::HandleEndTagCommand()
 }
 
 void CommandComponent::SendTunnelMessage(void* tunnel_payload,
-                                         size_t tunnel_payload_size)
+        size_t tunnel_payload_size)
 {
 	mavlink_message_t message;
 	mavlink_tunnel_t tunnel;
@@ -305,10 +305,10 @@ void CommandComponent::SendTunnelMessage(void* tunnel_payload,
 	memcpy(tunnel.payload, tunnel_payload, tunnel_payload_size);
 
 	mavlink_msg_tunnel_encode(
-		mavlink_passthrough_.get_our_sysid(),
-		mavlink_passthrough_.get_our_compid(),
-		&message,
-		&tunnel);
+	    mavlink_passthrough_.get_our_sysid(),
+	    mavlink_passthrough_.get_our_compid(),
+	    &message,
+	    &tunnel);
 
 	mavlink_passthrough_.send_message(message);
 }
@@ -324,8 +324,8 @@ void CommandComponent::SendStatusText(const char* text)
 
 	    memset(&statustext, 0, sizeof(statustext));
 
-        // Info shows up under megaphone
-        // Warning and above shows as pop up
+	    // Info shows up under megaphone
+	    // Warning and above shows as pop up
 	    statustext.severity = MAV_SEVERITY_INFO;
 
 	    strncpy(statustext.text, text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
@@ -346,8 +346,8 @@ void CommandComponent::SendStatusText(const char* text)
 double CommandComponent::TimeToDouble(int seconds, uint32_t nanoseconds)
 {
 	std::string uncoverted_time_value =
-		std::to_string(seconds) + "." +
-		std::to_string(nanoseconds);
+	    std::to_string(seconds) + "." +
+	    std::to_string(nanoseconds);
 
 	double converted_time_value = std::stod(uncoverted_time_value);
 

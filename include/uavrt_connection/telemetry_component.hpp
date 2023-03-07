@@ -73,102 +73,102 @@ struct InterpolationResults {
 class TelemetryComponent : public rclcpp::Node
 {
 public:
-explicit TelemetryComponent(const rclcpp::NodeOptions &options,
-                            std::shared_ptr<mavsdk::System> system);
+	explicit TelemetryComponent(const rclcpp::NodeOptions &options,
+	                            std::shared_ptr<mavsdk::System> system);
 
 private:
-// ROS 2 related - Private functions
-void AntennaPoseCallback();
+	// ROS 2 related - Private functions
+	void AntennaPoseCallback();
 
-void PulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr pulse_message);
+	void PulseCallback(uavrt_interfaces::msg::Pulse::SharedPtr pulse_message);
 
-// MAVSDK related - Private functions
-void ConnectionCallback(bool is_connected);
+	// MAVSDK related - Private functions
+	void ConnectionCallback(bool is_connected);
 
-void PositionCallback(mavsdk::Telemetry::Position position);
-void QuaternionCallback(mavsdk::Telemetry::Quaternion quaternion);
+	void PositionCallback(mavsdk::Telemetry::Position position);
+	void QuaternionCallback(mavsdk::Telemetry::Quaternion quaternion);
 
-// Private helper functions
-InterpolationResults InterpolatePosition(double pulse_average_time);
-void LogPulsePose(uavrt_interfaces::msg::PulsePose pulse_pose_message);
+	// Private helper functions
+	InterpolationResults InterpolatePosition(double pulse_average_time);
+	void LogPulsePose(uavrt_interfaces::msg::PulsePose pulse_pose_message);
 
-// ROS 2 related - Private variables
-rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr antenna_pose_publisher_;
+	// ROS 2 related - Private variables
+	rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr antenna_pose_publisher_;
 
-rclcpp::Subscription<uavrt_interfaces::msg::Pulse>::SharedPtr pulse_subscriber_;
+	rclcpp::Subscription<uavrt_interfaces::msg::Pulse>::SharedPtr pulse_subscriber_;
 
-rclcpp::Publisher<uavrt_interfaces::msg::PulsePose>::SharedPtr pulse_pose_publisher_;
+	rclcpp::Publisher<uavrt_interfaces::msg::PulsePose>::SharedPtr pulse_pose_publisher_;
 
-int queue_size_ = 10;
+	int queue_size_ = 10;
 
-// Class template std::chrono::duration represents a time interval.
-// Utilizes a repetition and a ratio (using std::ratio).
-// https://en.cppreference.com/w/cpp/chrono/duration
-// Note: The following line is equivalent to the one being used...
-// static constexpr auto period_ms_ = std::literals::chrono_literals::operator""ms(500);
-static constexpr auto antenna_pose_period_ms_ = std::chrono::milliseconds(500);
+	// Class template std::chrono::duration represents a time interval.
+	// Utilizes a repetition and a ratio (using std::ratio).
+	// https://en.cppreference.com/w/cpp/chrono/duration
+	// Note: The following line is equivalent to the one being used...
+	// static constexpr auto period_ms_ = std::literals::chrono_literals::operator""ms(500);
+	static constexpr auto antenna_pose_period_ms_ = std::chrono::milliseconds(500);
 
-// From what I can tell, this is a shared_ptr to a rclcpp::TimerBase object,
-// which contains a shared_ptr to a rclcpp::Clock object.
-// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/include/rclcpp/timer.hpp
-// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/src/rclcpp/clock.cpp
-// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/src/rclcpp/time_source.cpp
-rclcpp::TimerBase::SharedPtr antenna_pose_timer_;
+	// From what I can tell, this is a shared_ptr to a rclcpp::TimerBase object,
+	// which contains a shared_ptr to a rclcpp::Clock object.
+	// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/include/rclcpp/timer.hpp
+	// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/src/rclcpp/clock.cpp
+	// https://github.com/ros2/rclcpp/blob/galactic/rclcpp/src/rclcpp/time_source.cpp
+	rclcpp::TimerBase::SharedPtr antenna_pose_timer_;
 
-// For use in antenna pose callback
-std_msgs::msg::Header antenna_pose_header_;
-geometry_msgs::msg::PoseStamped antenna_pose_pose_stamped_;
-geometry_msgs::msg::Pose antenna_pose_pose_;
-geometry_msgs::msg::Point antenna_pose_point_;
-geometry_msgs::msg::Quaternion antenna_pose_quaternion_;
+	// For use in antenna pose callback
+	std_msgs::msg::Header antenna_pose_header_;
+	geometry_msgs::msg::PoseStamped antenna_pose_pose_stamped_;
+	geometry_msgs::msg::Pose antenna_pose_pose_;
+	geometry_msgs::msg::Point antenna_pose_point_;
+	geometry_msgs::msg::Quaternion antenna_pose_quaternion_;
 
-// For use in pulse callback
-geometry_msgs::msg::Pose pulse_pose_;
-geometry_msgs::msg::Point pulse_point_;
-geometry_msgs::msg::Quaternion pulse_quaternion_;
-uavrt_interfaces::msg::PulsePose pulse_pulse_pose_;
+	// For use in pulse callback
+	geometry_msgs::msg::Pose pulse_pose_;
+	geometry_msgs::msg::Point pulse_point_;
+	geometry_msgs::msg::Quaternion pulse_quaternion_;
+	uavrt_interfaces::msg::PulsePose pulse_pulse_pose_;
 
-// MAVSDK related - Private variables
-mavsdk::Telemetry mavsdk_telemetry;
+	// MAVSDK related - Private variables
+	mavsdk::Telemetry mavsdk_telemetry;
 
-bool connection_status_ = true;
+	bool connection_status_ = true;
 
-// Note: Value represent Hertz, 2 Hz = 0.5 seconds
-uint8_t postion_subscribe_rate_ = 2;
-uint8_t attitude_subscribe_rate_ = 2;
+	// Note: Value represent Hertz, 2 Hz = 0.5 seconds
+	uint8_t postion_subscribe_rate_ = 2;
+	uint8_t attitude_subscribe_rate_ = 2;
 
-// Info on array of vectors: https://www.geeksforgeeks.org/array-of-vectors-in-c-stl/
-// Make a 3 by 1 array of vectors expecting to be filled with type double
-// Note: Latitude and Longitude are doubles, but Altitude is a float. We eat
-// the extra memory cost to avoid using std::any/std::variant.
-// [[0] - Latitude
-// [0] - Longitude
-// [0]] - Altitude
-std::vector<double> antenna_pose_position_array_[3];
+	// Info on array of vectors: https://www.geeksforgeeks.org/array-of-vectors-in-c-stl/
+	// Make a 3 by 1 array of vectors expecting to be filled with type double
+	// Note: Latitude and Longitude are doubles, but Altitude is a float. We eat
+	// the extra memory cost to avoid using std::any/std::variant.
+	// [[0] - Latitude
+	// [0] - Longitude
+	// [0]] - Altitude
+	std::vector<double> antenna_pose_position_array_[3];
 
-// Make a 4 by 1 array of vectors expecting to be filled with type float.
-// [[0] - w
-// [0] - x
-// [0] - y
-// [0]] - z
-std::vector<float> antenna_pose_quaternion_array_[4];
+	// Make a 4 by 1 array of vectors expecting to be filled with type float.
+	// [[0] - w
+	// [0] - x
+	// [0] - y
+	// [0]] - z
+	std::vector<float> antenna_pose_quaternion_array_[4];
 
-// Make a vector that expects to be filled with type double.
-// Float was not large enough to store these values.
-// No reason to make this an array of vectors since we store the time as
-// seconds + nanoseconds for easy lookup later. If this needs to be broken up
-// into separate parts, then follow the same scheme as above and change the
-// "vector" of the name to array.
-std::vector<double> antenna_pose_time_vector_;
+	// Make a vector that expects to be filled with type double.
+	// Float was not large enough to store these values.
+	// No reason to make this an array of vectors since we store the time as
+	// seconds + nanoseconds for easy lookup later. If this needs to be broken up
+	// into separate parts, then follow the same scheme as above and change the
+	// "vector" of the name to array.
+	std::vector<double> antenna_pose_time_vector_;
 
-// https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_position.html#structmavsdk_1_1_telemetry_1_1_position_1
-// Latitude in degrees (range: -90 to +90)
-// Longitude in degrees (range: -180 to +180)
-// Altitude AMSL (above mean sea level) in metres
-mavsdk::Telemetry::Position position_;
+	// https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_position.html#structmavsdk_1_1_telemetry_1_1_position_1
+	// Latitude in degrees (range: -90 to +90)
+	// Longitude in degrees (range: -180 to +180)
+	// Altitude AMSL (above mean sea level) in metres
+	mavsdk::Telemetry::Position position_;
 
-// https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_quaternion.html
-mavsdk::Telemetry::Quaternion quaternion_;
+	// https://mavsdk.mavlink.io/main/en/cpp/api_reference/structmavsdk_1_1_telemetry_1_1_quaternion.html
+	mavsdk::Telemetry::Quaternion quaternion_;
 
 };
 
