@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 	// For example, to connect to the Gazebo SITL use URL: "udp://:14540"
 	//
 	// Note: For serial connections, the URL could instead be "serial:///dev/ttyACM0"
-	// You can confirm the serial file descriptor by using dmesg | grep tty within the terminal 
+	// You can confirm the serial file descriptor by using "dmesg | grep" tty within the terminal
 	if (arg_val == 0)
 	{ connection_result = mavsdk.add_any_connection("serial:///dev/ttyUSB0"); }
 	else if (arg_val == 1)
