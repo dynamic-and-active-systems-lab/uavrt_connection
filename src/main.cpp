@@ -147,10 +147,13 @@ int main(int argc, char *argv[])
 	// mavsdk.add_serial_connection() should work here as well, but I was
 	// unable to connect to my serial device when using add_serial_connection().
 	// https://mavsdk.mavlink.io/v0.33.0/en/api_reference/classmavsdk_1_1_mavsdk.html
-	// For example, to connect to the PX4 autopilot use URL: "serial:///dev/ttyACM0"
+	// For example, to connect to the PX4 autopilot via serial use URL: "serial:///dev/ttyUSB0"
 	// For example, to connect to the Gazebo SITL use URL: "udp://:14540"
+	//
+	// Note: For serial connections, the URL could instead be "serial:///dev/ttyACM0"
+	// You can confirm the serial file descriptor by using dmesg | grep tty within the terminal 
 	if (arg_val == 0)
-	{ connection_result = mavsdk.add_any_connection("serial:///dev/ttyACM0"); }
+	{ connection_result = mavsdk.add_any_connection("serial:///dev/ttyUSB0"); }
 	else if (arg_val == 1)
 	{ connection_result = mavsdk.add_any_connection("udp://:14540"); }
 	else
