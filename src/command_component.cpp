@@ -1,5 +1,5 @@
 // Codebase for the Connection package used within the UAV-RT architecture.
-// Copyright (C) 2022 Dynamic and Active Systems Lab
+// Copyright (C) 2023 Dynamic and Active Systems Lab
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -18,12 +18,9 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <thread>         // std::this_thread::sleep_for
 
 // Delete - only for debugging
-#include <cmath>
-#include <iostream>     // std::cout, std::fixed
-#include <iomanip>      // std::setprecision
-#include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 
 // Project header files
@@ -59,14 +56,14 @@ CommandComponent::CommandComponent(const rclcpp::NodeOptions& options,
 
 	// ROS 2 related - Publisher callback
 	release_tag_information_publisher_ = this->create_publisher<std_msgs::msg::Bool>(
-	        "release_tag_information",
-	        queue_size_);
+                                	        "release_tag_information",
+                                	        queue_size_);
 
 	// ROS 2 related - Subscriber callback
 	pulse_pose_subscriber_ = this->create_subscription<uavrt_interfaces::msg::PulsePose>(
 	                             "pulse_pose", queue_size_, std::bind(&CommandComponent::HandlePulseCommand,
-	                                     this,
-	                                     std::placeholders::_1));
+	                             this,
+	                             std::placeholders::_1));
 
 	// MAVSDK related
 	mavlink_passthrough_.subscribe_message_async(MAVLINK_MSG_ID_TUNNEL,

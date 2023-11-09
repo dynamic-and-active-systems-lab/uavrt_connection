@@ -6,7 +6,7 @@ The development of this code was funded via National Science Foundation grant no
 
 # Features
 
-Note: These features need to be updated. I will do this once I start the UAV-RT documenation, since text from that documentation will end up here. 
+Note: These features need to be updated. I will do this once I start the UAV-RT documenation, since text from that documentation will end up here.
 
 - Establishes and monitors a serial or UDP connection with a [PX4 autopilot](https://docs.px4.io/master/en/flight_controller/pixhawk4.html) or [Gazebo SITL](https://ardupilot.org/dev/docs/using-gazebo-simulator-with-sitl.html)
   - This connection is established and utilized with [MAVSDK C++](https://mavsdk.mavlink.io/main/en/cpp/)
@@ -34,7 +34,7 @@ The system requirments for the use of this package can be found here. (TBD)
 
 # Installation
 
-This installation assumes that you have completed the installation process for uavrt_source. 
+This installation assumes that you have completed the installation process for uavrt_source.
 
 ### Linux
 
@@ -45,20 +45,20 @@ source /opt/ros/galactic/setup.bash
 cd ~/uavrt_workspace/uavrt_source/
 ```
 
-You must be a member of the Dynamic and Active Systems Lab organization on Github. Authentication is currently required for the following command: 
+You must be a member of the Dynamic and Active Systems Lab organization on Github. Authentication is currently required for the following command:
 
 ```
 git clone https://github.com/dynamic-and-active-systems-lab/uavrt_connection/
 cd ~/uavrt_workspace/
 ```
 
-"All required rosdeps installed successfully" should be returned after the following command: 
+"All required rosdeps installed successfully" should be returned after the following command:
 
 ```
 rosdep install -i --from-path uavrt_source --rosdistro galactic -y
 ```
 
-The following command will only build out the uavrt_connection package. This is done to isolate errors or warnings: 
+The following command will only build out the uavrt_connection package. This is done to isolate errors or warnings:
 
 ```
 colcon build --packages-select uavrt_connection
@@ -66,26 +66,26 @@ source /opt/ros/galactic/setup.bash
 . install/local_setup.bash
 ```
 
-If these commands didn't fail, then your installation of uavrt_connection should be complete. 
+If these commands didn't fail, then your installation of uavrt_connection should be complete.
 
 # Basic operation
 
-In order to run the uavrt_connection package in isolation, use the following command: 
+In order to run the uavrt_connection package in isolation, use the following command:
 
 ```
 ros2 run uavrt_connection main #
 ```
 
-Where # corresponds to the type of connection you will be using. 
+Where # corresponds to the type of connection you will be using.
 
 Enter a '0' to use a serial connection or enter a '1' to use an UDP connection.
-For Serial, the connection string will be: 'serial:///dev/ttyACM0', and expects a PX4 autopilot to be plugged into this port. 
-For UDP, the connection string will be: 'udp://:14540', and expects a Gazebo SITL to be running at this port. 
+For Serial, the connection string will be: 'serial:///dev/ttyACM0', and expects a PX4 autopilot to be plugged into this port.
+For UDP, the connection string will be: 'udp://:14540', and expects a Gazebo SITL to be running at this port.
 
 # Troubleshooting
 
-Troubleshooting tips can be found here. (TBD)
+If you or your team encounter issues while installing or using the uavrt_connection package, please open a new issue within the "Issues" tab of the repository. 
 
 # License
 
-This codebase is released under the GNU General Public License v3.0. 
+This codebase is released under the GNU General Public License v3.0.

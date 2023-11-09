@@ -1,5 +1,5 @@
 // Codebase for the Connection package used within the UAV-RT architecture.
-// Copyright (C) 2022 Dynamic and Active Systems Lab
+// Copyright (C) 2023 Dynamic and Active Systems Lab
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -49,9 +49,9 @@
 
 // C++ standard library headers
 #include <memory>
-#include <future>
+// #include <future>
 #include <chrono>
-#include <string>
+// #include <string>
 
 //delete - only for debugging
 #include <iostream>
@@ -77,49 +77,49 @@ static void Usage()
 	          << "and expects a Gazebo SITL to be running at this port. \n";
 }
 
-std::shared_ptr<mavsdk::System> GetSystem(mavsdk::Mavsdk& mavsdk)
-{
-	// In order to use rclcpp::Logger, you need to supply the get_logger()
-	// function with a rclcpp::Node or you can call it while passing in the
-	// name of the node. The second option does not check if the node actually
-	// exists. AFAIK, this method of using get_logger() does not incur any
-	// pentalies. This option is easier than passing in a pointer of
-	// the node object within constructors or creating a seperate getter.
-	// https://answers.ros.org/question/361542/ros-2-how-to-create-a-non-node-logger/
-	// However, since we need the different classes to be nodes to create and
-	// use subscribers, publishers, etc., we might as well use the first option
-	// for everywhere aside from main.
-	RCLCPP_INFO(rclcpp::get_logger("Main"), "Waiting to discover system...");
-	auto system_promise = std::promise<std::shared_ptr<mavsdk::System> > {};
-	auto system_future = system_promise.get_future();
-
-	// We wait for new systems to be discovered, once we find one that has an
-	// autopilot, we decide to use it.
-	mavsdk.subscribe_on_new_system([&mavsdk, &system_promise]()
-	{
-		auto system = mavsdk.systems().back();
-
-		if (system->has_autopilot()) {
-			RCLCPP_INFO(rclcpp::get_logger("Main"), "Discovered autopilot.");
-
-			// Unsubscribe again as we only want to find one system.
-			mavsdk.subscribe_on_new_system(nullptr);
-			system_promise.set_value(system);
-		}
-	});
-
-	// We usually receive heartbeats at 1Hz
-	// This value should be greater than 1
-	if (system_future.wait_for(std::chrono::seconds(3)) ==
-	        std::future_status::timeout)
-	{
-		RCLCPP_ERROR(rclcpp::get_logger("Main"), "No autopilot found.");
-		return {};
-	}
-
-	// Get discovered system now.
-	return system_future.get();
-}
+// std::shared_ptr<mavsdk::System> GetSystem(mavsdk::Mavsdk& mavsdk)
+// {
+// 	// In order to use rclcpp::Logger, you need to supply the get_logger()
+// 	// function with a rclcpp::Node or you can call it while passing in the
+// 	// name of the node. The second option does not check if the node actually
+// 	// exists. AFAIK, this method of using get_logger() does not incur any
+// 	// pentalies. This option is easier than passing in a pointer of
+// 	// the node object within constructors or creating a seperate getter.
+// 	// https://answers.ros.org/question/361542/ros-2-how-to-create-a-non-node-logger/
+// 	// However, since we need the different classes to be nodes to create and
+// 	// use subscribers, publishers, etc., we might as well use the first option
+// 	// for everywhere aside from main.
+// 	RCLCPP_INFO(rclcpp::get_logger("Main"), "Waiting to discover system...");
+// 	auto system_promise = std::promise<std::shared_ptr<mavsdk::System> > {};
+// 	auto system_future = system_promise.get_future();
+//
+// 	// We wait for new systems to be discovered, once we find one that has an
+// 	// autopilot, we decide to use it.
+// 	mavsdk.subscribe_on_new_system([&mavsdk, &system_promise]()
+// 	{
+// 		auto system = mavsdk.systems().back();
+//
+// 		if (system->has_autopilot()) {
+// 			RCLCPP_INFO(rclcpp::get_logger("Main"), "Discovered autopilot.");
+//
+// 			// Unsubscribe again as we only want to find one system.
+// 			mavsdk.subscribe_on_new_system(nullptr);
+// 			system_promise.set_value(system);
+// 		}
+// 	});
+//
+// 	// We usually receive heartbeats at 1Hz
+// 	// This value should be greater than 1
+// 	if (system_future.wait_for(std::chrono::seconds(3)) ==
+// 	        std::future_status::timeout)
+// 	{
+// 		RCLCPP_ERROR(rclcpp::get_logger("Main"), "No autopilot found.");
+// 		return {};
+// 	}
+//
+// 	// Get discovered system now.
+// 	return system_future.get();
+// }
 
 int main(int argc, char *argv[])
 {
@@ -179,6 +179,8 @@ int main(int argc, char *argv[])
 	// 	return 1;
 	// }
 
+	// This next 26 lines of code were provided by Don Gagne as means to connect
+	// to both MAVSDK and QGC in order to send Tunnel messages.
 	bool foundAutopilot = false;
 	bool foundQGC       = false;
 
@@ -237,6 +239,8 @@ int main(int argc, char *argv[])
 	// spin will block until work comes in, execute work as it becomes available, and keep blocking.
 	// It will only be interrupted by Ctrl-C.
 	executor.spin();
+
+	// TODO: Add log message here?
 
 	rclcpp::shutdown();
 

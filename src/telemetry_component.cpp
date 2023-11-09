@@ -1,5 +1,5 @@
 // Codebase for the Connection package used within the UAV-RT architecture.
-// Copyright (C) 2022 Dynamic and Active Systems Lab
+// Copyright (C) 2023 Dynamic and Active Systems Lab
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -50,6 +50,7 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 	// ROS 2 related - Publisher callbacks
 	antenna_pose_publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
 	                              "antenna_pose", queue_size_);
+
 	antenna_pose_timer_ = this->create_wall_timer(
 	                          antenna_pose_period_ms_, std::bind(&TelemetryComponent::AntennaPoseCallback,
 	                                  this));
@@ -75,6 +76,7 @@ TelemetryComponent::TelemetryComponent(const rclcpp::NodeOptions& options,
 	mavsdk_telemetry.subscribe_position(std::bind(&TelemetryComponent::PositionCallback,
 	                                    this,
 	                                    std::placeholders::_1));
+
 	mavsdk_telemetry.subscribe_attitude_quaternion(std::bind(&TelemetryComponent::QuaternionCallback,
 	        this,
 	        std::placeholders::_1));
@@ -269,7 +271,7 @@ InterpolationResults TelemetryComponent::InterpolatePosition(
 	uint16_t seven_hours_in_seconds = 25200;
 
 	// The time we are receiving from the detectors is recorded using GMT -7.
-	// We had seven hours to the average times in order to bring them to GMT 0.
+	// We add seven hours to the average times in order to bring them to GMT 0.
 	// This is a bandaid. All uavrt packages should be using the same timezone.
 	pulse_average_time = pulse_average_time + seven_hours_in_seconds;
 
@@ -369,6 +371,7 @@ InterpolationResults TelemetryComponent::InterpolatePosition(
 	// Thank you to this SO post for making it easier to understand how I'm
 	// supposed to use these pieces of Boost functionality.
 	// https://stackoverflow.com/questions/70385110/boost-qvms-normalized-for-quaternions-doesnt-work-with-boost-multiprecision
+    // https://www.boost.org/doc/libs/1_80_0/libs/qvm/doc/html/index.html
 	boost::qvm::quat<float> pulse_quaternion_upper_index;
 
 	pulse_quaternion_upper_index.a[static_cast<int>(QuaternionArray::WIndex)] =

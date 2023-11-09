@@ -1,5 +1,5 @@
 // Codebase for the Connection package used within the UAV-RT architecture.
-// Copyright (C) 2022 Dynamic and Active Systems Lab
+// Copyright (C) 2023 Dynamic and Active Systems Lab
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -24,6 +24,7 @@
 
 // ROS 2 interface header files
 #include "std_msgs/msg/header.hpp"
+
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
