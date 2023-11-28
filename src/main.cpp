@@ -51,7 +51,7 @@
 #include <memory>
 // #include <future>
 #include <chrono>
-// #include <string>
+#include <thread>
 
 //delete - only for debugging
 #include <iostream>
@@ -187,6 +187,8 @@ int main(int argc, char *argv[])
 	std::shared_ptr<mavsdk::System> autopilotSystem;
 	std::shared_ptr<mavsdk::System> qgcSystem;
 
+	static constexpr auto retry_connection_delay_ms = std::chrono::milliseconds(500);
+
 	while (!foundAutopilot || !foundQGC) {
 		std::vector< std::shared_ptr< mavsdk::System > > systems = mavsdk.systems();
 		for (size_t i = 0; i < systems.size(); i++) {
@@ -206,7 +208,8 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		// Busy wait
+		std::this_thread::sleep_for(retry_connection_delay_ms);
 	}
 
 	// Initialize any global resources needed by the middleware and the client library.

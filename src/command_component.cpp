@@ -18,10 +18,8 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <thread>         // std::this_thread::sleep_for
-
-// Delete - only for debugging
-#include <chrono>         // std::chrono::seconds
+#include <thread>
+#include <chrono>
 
 // Project header files
 #include "uavrt_connection/command_component.hpp"
@@ -255,9 +253,7 @@ void CommandComponent::HandlePulseCommand(
 	SendTunnelMessage(&pulse_info, sizeof(pulse_info));
 
 	// Delay to avoid tunnel messages being dropped by MAVLINK.
-	// TODO: Replace chrono with time value from telemetry_component.hpp.
-	// Remove import.
-	std::this_thread::sleep_for (std::chrono::milliseconds(10));
+	std::this_thread::sleep_for(packet_delay_time_ms);
 
 	RCLCPP_INFO(this->get_logger(),
 	            "Successfully sent pulse pose message to the ground.");

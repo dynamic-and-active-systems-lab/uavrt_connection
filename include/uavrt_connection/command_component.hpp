@@ -80,6 +80,8 @@ private:
 
     int queue_size_ = 10;
 
+    static constexpr auto packet_delay_time_ms = std::chrono::milliseconds(10);
+
     // For use in start command callback
     std_msgs::msg::Header start_command_header_;
     diagnostic_msgs::msg::DiagnosticArray start_command_diagnostic_array_;
@@ -94,11 +96,11 @@ private:
 
     // For use in tag command callback
     uavrt_interfaces::msg::Tag tag_info_;
+    // TODO std_msg Bool is deprecated. Use the equivalent in example_msgs.
     std_msgs::msg::Bool release_tag_information_bool_;
 
     // MAVSDK related - Private variables
     mavsdk::MavlinkPassthrough mavlink_passthrough_;
-
 };
 
 }  // namespace uavrt_connection
